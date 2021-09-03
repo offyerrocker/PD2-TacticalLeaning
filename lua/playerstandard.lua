@@ -2,23 +2,11 @@ if _G.IS_VR then
 	return
 end
 
-
-Hooks:PostHook(PlayerStandard,"_end_action_steelsight","playerstandard__end_action_steelsight_tacticallean",function(self,t)
-	if TacticalLean:GetLeanDirection() then
-		TacticalLean:SetLeanStanceTransition()
-	end
-end)
-
-Hooks:PostHook(PlayerStandard,"_start_action_steelsight","playerstandard__start_action_steelsight_tacticallean",function(self,t,gadget_state)
-	if TacticalLean:GetLeanDirection() and not TacticalLean:IsExitingLean() then
-		TacticalLean:SetLeanStanceTransition()
-	end
-end)
-
 local orig_check_bipod = PlayerStandard._check_action_deploy_bipod
 function PlayerStandard:_check_action_deploy_bipod(t,input,...)
 	if TacticalLean:GetLeanDirection() then
-		return orig_check_bipod(self,t,input,...)
+		--prevent bipodding if leaning
+		return orig_check_bipod(self,t,input,...)	
 	end
 end
 
@@ -28,53 +16,11 @@ Hooks:PostHook(PlayerStandard,"_start_action_running","startrun_tacticallean",fu
 	end
 end)
 
-Hooks:PostHook(PlayerStandard,"_start_action_ducking","startduck_tacticallean",function(self,t)
+local orig_check_jump = PlayerStandard._check_action_jump
+function PlayerStandard:_check_action_jump(t,input,...)
+	--prevent jumping if leaning
+	--todo prevent leaning if midair?
 	if TacticalLean:GetLeanDirection() then
-		TacticalLean:SetLeanStanceTransition()
+		return orig_check_jump(self,t,input,...)
 	end
 end)
-
-Hooks:PostHook(PlayerStandard,"_end_action_ducking","endduck_tacticallean",function(self,t)
-	if TacticalLean:GetLeanDirection() then
-		TacticalLean:SetLeanStanceTransition()
-	end
-end)
-
---todo stopping leaning if starting to zipline?
---todo preventing leaning while ziplining (self:on_zipline)?
-
---[[
-Hooks:PostHook(PlayerStandard,"_start_action_unequip_weapon","unswitchweapon_tacticallean",function(self,t)
---called whenever you swap primary/secondary weapons ingame
-	if TacticalLean.current_lean then 
-		TacticalLean:stop_lean()
-	end
-end)
-Hooks:PostHook(PlayerStandard,"_start_action_equip","switchweapon_tacticallean",function(self,redirect,extra_time)
---don't bother; this is only called at mission start
-	if TacticalLean.current_lean then 
-		TacticalLean:update_lean_stance()
-	end
-end)
-
---local orig_check_zipline = PlayerStandard._check_action_zipline
---function PlayerStandard:_check_action_zipline(t,input)
---end
-
---Hooks:PostHook(PlayerStandard,"_check_action_zipline","playerstandard__check_action_zipline_tacticallean",function(self,t,input)
---	TacticalLean:stop_lean()
---end)
-function PlayerStandard:_check_action_zipline(t, input)
-	if self._state_data.in_air then
-		return
-	end
-
-	if not self._state_data.on_zipline then
-		local zipline_unit = self._unit:movement():zipline_unit()
-
-		if alive(zipline_unit) then
-			self:_start_action_zipline(t, input, zipline_unit)
-		end
-	end
-end
---]]

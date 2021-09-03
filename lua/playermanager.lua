@@ -9,6 +9,8 @@ Hooks:PostHook(PlayerManager,"update","PlayerManagerUpdate_TacticalLean",functio
 	local t = Application:time()
 	local __t = string.format("%0.2f",t)
 	
+--	local in_air = state:in_air()
+	
 	local lean_duration = TacticalLean:GetLeanDuration()
 --	local lean_timer = TacticalLean:GetTimer()
 --	local lean_time_remaining = math.max(t - (lean_timer + lean_duration),0)
@@ -17,7 +19,7 @@ Hooks:PostHook(PlayerManager,"update","PlayerManagerUpdate_TacticalLean",functio
 	local current_lerp = TacticalLean:GetLeanLerp()
 	if TacticalLean:IsExitingLean() then
 		if current_lerp > 0 then 
-			TacticalLean:SetLeanLerp(math.max(current_lerp - (dt * (1 / lean_duration)),0))
+			TacticalLean:SetLeanLerp(math.max(current_lerp - (dt / lean_duration),0))
 			Console:SetTrackerValue("trackerc","Exiting " .. __t)
 		else
 			Console:SetTrackerValue("trackerc","Done exiting " .. __t)
@@ -25,7 +27,7 @@ Hooks:PostHook(PlayerManager,"update","PlayerManagerUpdate_TacticalLean",functio
 		end
 	elseif TacticalLean:GetLeanDirection() then
 		if current_lerp < 1 then
-			TacticalLean:SetLeanLerp(math.min(current_lerp + (dt * (1 / lean_duration)),1))
+			TacticalLean:SetLeanLerp(math.min(current_lerp + (dt / lean_duration),1))
 			Console:SetTrackerValue("trackerc","Starting " .. __t)
 		else
 			Console:SetTrackerValue("trackerc","Holding " .. __t)
@@ -46,7 +48,7 @@ Hooks:PostHook(PlayerManager,"update","PlayerManagerUpdate_TacticalLean",functio
 	
 	local current_lean = TacticalLean:GetLeanDirection()
 	local new_lean_direction
-	if HoldTheKey:Keybind_Held(TacticalLean.KEYBIND_LEAN_LEFT)then
+	if HoldTheKey:Keybind_Held(TacticalLean.KEYBIND_LEAN_LEFT) then
 		new_lean_direction = "left"
 		if current_lean ~= new_lean_direction then
 			TacticalLean:StartLean(new_lean_direction)
