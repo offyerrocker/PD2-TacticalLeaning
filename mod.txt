@@ -32,10 +32,5 @@
 			"hook_id" : "lib/units/cameras/fpcameraplayerbase",
 			"script_path" : "fpcameraplayerbase.lua"
 		}
-	],
-	"updates" : [
-		{
-			"identifier" : "tacticool_lean"
-		}
 	]
 }

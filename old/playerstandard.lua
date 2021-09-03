@@ -1,3 +1,7 @@
+if _G.IS_VR then 
+	return
+end
+
 Hooks:PostHook(PlayerStandard,"_end_action_steelsight","playerstandard__end_action_steelsight_tacticallean",function(self,t)
 	if TacticalLean.current_lean then
 		TacticalLean:update_lean_stance()

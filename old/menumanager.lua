@@ -1,3 +1,7 @@
+if _G.IS_VR then 
+	return
+end
+
 _G.TacticalLean = _G.TacticalLean or {}
 local TacLean = _G.TacticalLean
 
@@ -6,6 +10,8 @@ TacLean.save_path = SavePath .. "tactical_lean.txt"
 
 TacLean.lean_duration = 0.2
 TacLean.check_collision = true --disable this for better performance
+
+TacLean.VERTICAL_DISTANCE = -2
 
 --TacLean.move_anim_scale = 0.175 --(OBSOLETE) affects only translation speed, not rotation speed, as rot speed is handled by the base game
 TacLean.move_anim_t = -1 --will be set to Application:time or TimerManager:game():time()
@@ -134,7 +140,7 @@ function TacLean:Load()
 end
 
 function TacLean:Save()
-	TacLean:anim_t(new) --this global tends to glitch out so here's a free "reset" button
+	TacLean:anim_t(0) --this global tends to glitch out so here's a free "reset" button
 	local file = io.open(self.save_path,"w+")
 	if file then
 		file:write(json.encode(self.settings))

@@ -1,0 +1,7 @@
+<mod name="Tactical Leaning" author="Offyerrocker" color="Color(0.1,0.1,1)">
+	<AssetUpdates id="22254" version="3.0" provider="modworkshop" install_directory = "mods/" version_is_number="false"/>
+	<Localization directory="localization" default="english.json">
+		<loc file="english.json" language="english" />
+		<loc file="schinese.json" language="schinese" />
+	</Localization>
+</mod>

@@ -1,8 +1,10 @@
---could use a persist script for this I guess but this is fine
+if _G.IS_VR then 
+	return
+end
+
 Hooks:PostHook(PlayerManager,"update","PlayerManagerUpdate_TacticalLean",function(self,t,dt)
 --todo check if player is in valid state, ie. standing, jumping or crouching
-	local is_alive = Utils:IsInHeist() and Utils:IsInCustody() == false and Utils:IsInGameState()
-	if not is_alive or TacticalLean.settings.toggle_lean then
+	if TacticalLean.settings.toggle_lean or not alive(managers.player:local_player()) then
 		return
 	end
 	local either
