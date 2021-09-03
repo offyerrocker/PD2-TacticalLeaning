@@ -9,5 +9,7 @@
 	"taclean_slider_distance_title" : "Lean distance",
 	"taclean_slider_distance_desc" : "Change the distance to lean to",
 	"taclean_slider_angle_title" : "Lean angle",
-	"taclean_slider_angle_desc" : "Change the angle to lean at"
+	"taclean_slider_angle_desc" : "Change the angle to lean at",
+	"hud_taclean_state_blocked_downed" : "You cannot lean while downed!"
+	"hud_taclean_state_blocked_generic" : "You cannot lean here!"
 }

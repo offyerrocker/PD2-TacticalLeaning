@@ -10,27 +10,41 @@
 	"hooks" : [
 		{
 			"hook_id" : "lib/managers/menumanager",
-			"script_path" : "menumanager.lua"
+			"script_path" : "lua/menumanager.lua"
 		},
 		{
 			"hook_id" : "lib/managers/playermanager",
-			"script_path" : "playermanager.lua"
-		},
-		{
-			"hook_id" : "lib/units/beings/player/playercamera",
-			"script_path" : "playercamera.lua"
+			"script_path" : "lua/playermanager.lua"
 		},
 		{
 			"hook_id" : "lib/units/beings/player/states/playerstandard",
-			"script_path" : "playerstandard.lua"
+			"script_path" : "lua/playerstandard.lua"
 		},
 		{
 			"hook_id" : "lib/units/beings/player/playerinventory",
-			"script_path" : "playerinventory.lua"
+			"script_path" : "lua/playerinventory.lua"
+		},
+		{
+			"hook_id" : "lib/units/beings/player/playercamera",
+			"script_path" : "lua/playercamera.lua"
 		},
 		{
 			"hook_id" : "lib/units/cameras/fpcameraplayerbase",
-			"script_path" : "fpcameraplayerbase.lua"
+			"script_path" : "lua/fpcameraplayerbase.lua"
 		}
+	],
+	"keybinds" : [
+		{
+            "keybind_id" : "keybindid_taclean_left",
+            "name" : "taclean_keybind_left_title",
+			"description" : "taclean_keybind_left_desc",
+            "localized" : true
+        },
+		{
+            "keybind_id" : "keybindid_taclean_right",
+            "name" : "taclean_keybind_right_title",
+			"description" : "taclean_keybind_right_desc",
+            "localized" : true
+        }
 	]
 }

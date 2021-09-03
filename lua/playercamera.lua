@@ -2,6 +2,21 @@ if _G.IS_VR then
 	return
 end
 
+blargh = true
+
+local orig_set_cam_pos = PlayerCamera.set_position --not really needed
+function PlayerCamera:set_position(pos,...)
+	if blargh then 
+		log(tostring(debug.traceback()))
+		blargh = false
+	end
+	return orig_set_cam_pos(self,pos,...)
+end
+
+
+
+do return end
+
 local hard_block = false --whether or not to instantly stop leaning when invalid lean position; i don't like it
 local orig_set_cam_pos = PlayerCamera.set_position --not really needed
 function PlayerCamera:set_position(pos,...)

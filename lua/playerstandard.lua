@@ -2,43 +2,43 @@ if _G.IS_VR then
 	return
 end
 
+
 Hooks:PostHook(PlayerStandard,"_end_action_steelsight","playerstandard__end_action_steelsight_tacticallean",function(self,t)
-	if TacticalLean.current_lean then
-		TacticalLean:update_lean_stance()
+	if TacticalLean:GetCurrentLean() then
+		TacticalLean:SetLeanStanceTransition()
 	end
 end)
 
 Hooks:PostHook(PlayerStandard,"_start_action_steelsight","playerstandard__start_action_steelsight_tacticallean",function(self,t,gadget_state)
-	if TacticalLean.current_lean and not TacticalLean.exiting_lean then
-		TacticalLean:update_lean_stance()
+	if TacticalLean:GetCurrentLean() and not TacticalLean:IsExitingLean() then
+		TacticalLean:SetLeanStanceTransition()
 	end
 end)
 
 local orig_check_bipod = PlayerStandard._check_action_deploy_bipod
-function PlayerStandard:_check_action_deploy_bipod(t,input)
-	if not TacticalLean.current_lean then --or TacticalLean.exiting_lean then
-		return orig_check_bipod(self,t,input)
+function PlayerStandard:_check_action_deploy_bipod(t,input,...)
+	if TacticalLean:GetCurrentLean() then
+		return orig_check_bipod(self,t,input,...)
 	end
 end
 
 Hooks:PostHook(PlayerStandard,"_start_action_running","startrun_tacticallean",function(self,t)
-	if TacticalLean.current_lean then
-		TacticalLean:stop_lean()
+	if TacticalLean:GetCurrentLean() then
+		TacticalLean:StopLean()
 	end
 end)
 
 Hooks:PostHook(PlayerStandard,"_start_action_ducking","startduck_tacticallean",function(self,t)
-	if TacticalLean.current_lean then
-		TacticalLean:update_lean_stance()
+	if TacticalLean:GetCurrentLean() then
+		TacticalLean:SetLeanStanceTransition()
 	end
 end)
 
 Hooks:PostHook(PlayerStandard,"_end_action_ducking","endduck_tacticallean",function(self,t)
-	if TacticalLean.current_lean then
-		TacticalLean:update_lean_stance()
+	if TacticalLean:GetCurrentLean() then
+		TacticalLean:SetLeanStanceTransition()
 	end
 end)
-
 
 --todo stopping leaning if starting to zipline?
 --todo preventing leaning while ziplining (self:on_zipline)?
