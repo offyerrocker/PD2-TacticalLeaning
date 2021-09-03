@@ -18,10 +18,6 @@ TacticalLean.KEYBIND_LEAN_LEFT = "keybindid_taclean_left"
 TacticalLean.KEYBIND_LEAN_RIGHT = "keybindid_taclean_right"
 TacticalLean.LEAN_DURATION = 0.2
 TacticalLean.CHECK_COLLISION = true
-
-TacticalLean.lean_timer = 0
-TacticalLean.current_lean = false
-TacticalLean.exiting_lean = false
 TacticalLean.STATE_WHITELIST = {
 	carry = true,
 	clean = true,
@@ -33,18 +29,23 @@ TacticalLean.STATE_BLOCKED_STRINGS = {
 }
 
 TacticalLean.settings = {
-	lean_distance = 30,
-	toggle_lean = false,
-	lean_angle = 10
+	lean_distance = 30, --in cm
+	lean_angle = 10, --in degrees
+	toggle_lean = false
 }
 
-function TacticalLean:GetTimer()
-	return self.lean_timer or 0
-end
+TacticalLean.lean_direction = false 
+--can be "left" or "right" or boolean;
+--describes the direction of the player's current lean, or if exiting lean, their prior lean state as the lean returns to 0
 
-function TacticalLean:SetTimer(t)
-	self.lean_timer = t
-end
+TacticalLean.lean_lerp = 0 
+--number between 0 and 1, inclusive
+--describes the percentage state of the current lean (eg 1 is fully leaning, 0 or false/nil is not leaning, 0.5 is halfway midlean)
+--this number is adjusted as the lean updates
+
+TacticalLean.exiting_lean = false
+--boolean
+--describes whether or not the player is exiting a lean
 
 function TacticalLean:GetLeanDistance()
 	return self.settings.lean_distance
@@ -58,6 +59,188 @@ function TacticalLean:GetLeanAngle(lr)
 		lean_lr = self.settings.lean_angle
 	end
 	return lean_lr
+end
+
+function TacticalLean:GetLeanDirection()
+	return self.lean_direction
+end
+
+function TacticalLean:SetLeanDirection(lr)
+	self.lean_direction = lr
+end
+
+function TacticalLean:GetLeanLerp()
+	return self.lean_lerp
+end
+
+function TacticalLean:SetLeanLerp(f)
+	self.lean_lerp = f
+end
+
+function TacticalLean:GetLeanDuration()
+	return self.LEAN_DURATION
+end
+
+function TacticalLean:IsCollisionCheckEnabled()
+	return self.CHECK_COLLISION
+end
+
+function TacticalLean:IsExitingLean()
+	return self.exiting_lean
+end
+
+function TacticalLean:IsToggleModeEnabled()
+	return self.settings.toggle_lean
+end
+
+function TacticalLean:OnLeanStopped()
+	self:SetLeanDirection(false)
+	self.exiting_lean = false
+	self:SetLeanLerp(0)
+end
+
+
+
+
+
+
+function TacticalLean:StartLean(lr)
+	if self:IsExitingLean() then 
+		return
+	end
+	local pm = managers.player
+	local player = managers.player:local_player() 
+	if not alive(player) then 
+		return
+	end
+	local movement_ext = player:movement()
+	local state = movement_ext:current_state()
+	if state:running() then 
+		--don't show a hint, too annoying
+		return
+	end
+	local state_name = player:current_state()
+	if self.STATE_WHITELIST[state_name] then 
+		local blocked_str = self.STATE_BLOCKED_STRINGS[state_name]
+		if blocked_str then 
+			managers.hud:show_hint({text = managers.localization:text(blocked_str)})
+		end
+		
+		return
+	end
+	--todo raycast check for collision
+	if self:IsToggleModeEnabled() and lr and self:GetLeanDirection() == lr then
+		TacticalLean:StopLean()
+		return
+	end
+	self:SetLeanDirection(lr)
+--	self:SetTimer(Application:time())
+--	self.lean_remaining = self:GetLeanAngle(lr)
+	--self:SetLeanStanceTransition()
+end
+
+function TacticalLean:StopLean()
+	if not self:IsExitingLean() then
+		--prevent anim glitching by repeatedly stopping lean without starting lean in between
+		self.exiting_lean = self:GetLeanDirection()
+--		self:SetLeanStanceTransition(true)
+	end
+--	self.lean_remaining = 0
+end
+
+function TacticalLean:SetLeanStanceTransition()
+	local player = managers.player:local_player()
+	if alive(player) then
+--		player:camera():camera_unit():base():start_lean_transition_stance(exiting) --experimental transition fix, promising but broken as hell
+	end
+end
+
+
+
+
+
+
+
+
+
+function TacticalLean:Load()
+	local file = io.open(self.save_path, "r")
+	if (file) then
+		for k, v in pairs(json.decode(file:read("*all"))) do
+			self.settings[k] = v
+		end
+		file:close()
+	else
+		self:Save()
+	end
+end
+
+function TacticalLean:Save()
+	local file = io.open(self.save_path,"w+")
+	if file then
+		file:write(json.encode(self.settings))
+		file:close()
+	end
+end
+
+
+
+Hooks:Add("LocalizationManagerPostInit", "LocalizationManagerPostInit_TacticalLean", function( loc )
+	if not BeardLib then 
+		loc:load_localization_file(TacticalLean.default_localization_path)
+	end
+end)
+
+
+Hooks:Add( "MenuManagerInitialize", "MenuManagerInitialize_TacticalLean", function(menu_manager)
+	MenuCallbackHandler.callback_taclean_toggle_lean = function(self,item)
+		local value = item:value() == "on"
+		TacticalLean.settings.toggle_lean = value
+		TacticalLean:Save()
+	end
+	MenuCallbackHandler.callback_taclean_slider_angle = function(self,item)
+		TacticalLean.settings.lean_angle = tonumber(item:value())
+		TacticalLean:Save()
+	end
+	MenuCallbackHandler.callback_taclean_slider_distance = function(self,item)
+		TacticalLean.settings.lean_distance = tonumber(item:value())
+		TacticalLean:Save()
+	end	
+	MenuCallbackHandler.taclean_keybind_func_left = function(self)
+		if TacticalLean:IsToggleModeEnabled() then
+			TacticalLean:StartLean("left")
+		end
+	end
+	MenuCallbackHandler.taclean_keybind_func_right = function(self)
+		if TacticalLean:IsToggleModeEnabled() then
+			TacticalLean:StartLean("right")
+		end
+	end
+	MenuCallbackHandler.callback_taclean_close = function(this)
+		TacticalLean:Save()
+	end
+	TacticalLean:Load()
+	MenuHelper:LoadFromJsonFile(TacticalLean.options_menu_path, TacticalLean, TacticalLean.settings)
+
+	HoldTheKey:Add_Keybind(TacticalLean.KEYBIND_LEAN_LEFT)
+	HoldTheKey:Add_Keybind(TacticalLean.KEYBIND_LEAN_RIGHT)
+
+end)
+
+
+
+do return end
+
+TacticalLean.lean_timer = 0
+TacticalLean.current_lean = false
+TacticalLean.exiting_lean = false
+
+function TacticalLean:GetTimer()
+	return self.lean_timer or 0
+end
+
+function TacticalLean:SetTimer(t)
+	self.lean_timer = t
 end
 
 function TacticalLean:GetCurrentLean()
@@ -163,71 +346,6 @@ function TacticalLean:RaycastCheck(lr)
 	end
 	--]]
 end
-
-function TacticalLean:Load()
-	local file = io.open(self.save_path, "r")
-	if (file) then
-		for k, v in pairs(json.decode(file:read("*all"))) do
-			self.settings[k] = v
-		end
-		file:close()
-	else
-		self:Save()
-	end
-end
-
-function TacticalLean:Save()
-	self:SetTimer(0) --this global tends to glitch out so here's a free "reset" button
-	local file = io.open(self.save_path,"w+")
-	if file then
-		file:write(json.encode(self.settings))
-		file:close()
-	end
-end
-
-
-
-Hooks:Add("LocalizationManagerPostInit", "LocalizationManagerPostInit_TacticalLean", function( loc )
-	if not BeardLib then 
-		loc:load_localization_file(TacticalLean.default_localization_path)
-	end
-end)
-
-
-Hooks:Add( "MenuManagerInitialize", "MenuManagerInitialize_TacticalLean", function(menu_manager)
-	MenuCallbackHandler.callback_taclean_toggle_lean = function(self,item)
-		local value = item:value() == "on"
-		TacticalLean.settings.toggle_lean = value
-		TacticalLean:Save()
-	end
-	MenuCallbackHandler.callback_taclean_slider_angle = function(self,item)
-		TacticalLean.settings.lean_angle = tonumber(item:value())
-		TacticalLean:Save()
-	end
-	MenuCallbackHandler.callback_taclean_slider_distance = function(self,item)
-		TacticalLean.settings.lean_distance = tonumber(item:value())
-		TacticalLean:Save()
-	end	
-	MenuCallbackHandler.taclean_keybind_func_left = function(self)
-		if TacticalLean:IsToggleModeEnabled() then
-			TacticalLean:StartLean("left")
-		end
-	end
-	MenuCallbackHandler.taclean_keybind_func_right = function(self)
-		if TacticalLean:IsToggleModeEnabled() then
-			TacticalLean:StartLean("right")
-		end
-	end
-	MenuCallbackHandler.callback_taclean_close = function(this)
-		TacticalLean:Save()
-	end
-	TacticalLean:Load()
-	MenuHelper:LoadFromJsonFile(TacticalLean.options_menu_path, TacticalLean, TacticalLean.settings)
-
-	HoldTheKey:Add_Keybind("keybindid_taclean_left")
-	HoldTheKey:Add_Keybind("keybindid_taclean_right")
-
-end)
 
 do return end
 

@@ -4,38 +4,38 @@ end
 
 
 Hooks:PostHook(PlayerStandard,"_end_action_steelsight","playerstandard__end_action_steelsight_tacticallean",function(self,t)
-	if TacticalLean:GetCurrentLean() then
+	if TacticalLean:GetLeanDirection() then
 		TacticalLean:SetLeanStanceTransition()
 	end
 end)
 
 Hooks:PostHook(PlayerStandard,"_start_action_steelsight","playerstandard__start_action_steelsight_tacticallean",function(self,t,gadget_state)
-	if TacticalLean:GetCurrentLean() and not TacticalLean:IsExitingLean() then
+	if TacticalLean:GetLeanDirection() and not TacticalLean:IsExitingLean() then
 		TacticalLean:SetLeanStanceTransition()
 	end
 end)
 
 local orig_check_bipod = PlayerStandard._check_action_deploy_bipod
 function PlayerStandard:_check_action_deploy_bipod(t,input,...)
-	if TacticalLean:GetCurrentLean() then
+	if TacticalLean:GetLeanDirection() then
 		return orig_check_bipod(self,t,input,...)
 	end
 end
 
 Hooks:PostHook(PlayerStandard,"_start_action_running","startrun_tacticallean",function(self,t)
-	if TacticalLean:GetCurrentLean() then
+	if TacticalLean:GetLeanDirection() then
 		TacticalLean:StopLean()
 	end
 end)
 
 Hooks:PostHook(PlayerStandard,"_start_action_ducking","startduck_tacticallean",function(self,t)
-	if TacticalLean:GetCurrentLean() then
+	if TacticalLean:GetLeanDirection() then
 		TacticalLean:SetLeanStanceTransition()
 	end
 end)
 
 Hooks:PostHook(PlayerStandard,"_end_action_ducking","endduck_tacticallean",function(self,t)
-	if TacticalLean:GetCurrentLean() then
+	if TacticalLean:GetLeanDirection() then
 		TacticalLean:SetLeanStanceTransition()
 	end
 end)

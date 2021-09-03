@@ -7,24 +7,44 @@ Hooks:PostHook(PlayerManager,"update","PlayerManagerUpdate_TacticalLean",functio
 		return
 	end
 	local t = Application:time()
+	local __t = string.format("%0.2f",t)
 	
 	local lean_duration = TacticalLean:GetLeanDuration()
-	local lean_timer = TacticalLean:GetTimer()
+--	local lean_timer = TacticalLean:GetTimer()
 --	local lean_time_remaining = math.max(t - (lean_timer + lean_duration),0)
 --	local lean_time_lerp = lean_time_remaining / lean_duration
 	
-	if t - lean_timer > lean_duration then 
-		if TacticalLean:IsExitingLean() then 
+	local current_lerp = TacticalLean:GetLeanLerp()
+	if TacticalLean:IsExitingLean() then
+		if current_lerp > 0 then 
+			TacticalLean:SetLeanLerp(math.max(current_lerp - (dt * (1 / lean_duration)),0))
+			Console:SetTrackerValue("trackerc","Exiting " .. __t)
+		else
+			Console:SetTrackerValue("trackerc","Done exiting " .. __t)
 			TacticalLean:OnLeanStopped()
 		end
+	elseif TacticalLean:GetLeanDirection() then
+		if current_lerp < 1 then
+			TacticalLean:SetLeanLerp(math.min(current_lerp + (dt * (1 / lean_duration)),1))
+			Console:SetTrackerValue("trackerc","Starting " .. __t)
+		else
+			Console:SetTrackerValue("trackerc","Holding " .. __t)
+		end
 	end
+	Console:SetTrackerValue("trackerb",string.format("%0.2f / %0.2f",TacticalLean:GetLeanLerp() or 0,lean_duration))
+	
+--	if t - lean_timer > lean_duration then 
+--		if TacticalLean:IsExitingLean() then 
+--			TacticalLean:OnLeanStopped()
+--		end
+--	end
 
 
 	if TacticalLean:IsToggleModeEnabled() then
 		return
 	end
 	
-	local current_lean = TacticalLean:GetCurrentLean()
+	local current_lean = TacticalLean:GetLeanDirection()
 	local new_lean_direction
 	if HoldTheKey:Keybind_Held(TacticalLean.KEYBIND_LEAN_LEFT)then
 		new_lean_direction = "left"
@@ -39,7 +59,7 @@ Hooks:PostHook(PlayerManager,"update","PlayerManagerUpdate_TacticalLean",functio
 		end
 	end
 	local exiting_lean = TacticalLean:IsExitingLean()
-	if not new_lean_direction and TacticalLean:GetCurrentLean() and not exiting_lean then
+	if not new_lean_direction and TacticalLean:GetLeanDirection() and not exiting_lean then
 		TacticalLean:StopLean()
 	end
 	--[[

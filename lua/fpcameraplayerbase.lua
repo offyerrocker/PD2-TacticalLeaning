@@ -63,31 +63,30 @@ function FPCameraPlayerBase:_update_movement(t, dt,...)
 
 --//changed
 -- [[
-	local current_lean = TacticalLean:GetCurrentLean()
+	local current_lean = TacticalLean:GetLeanDirection()
 	local exiting_lean = TacticalLean:IsExitingLean()
 	local lean_direction = current_lean or exiting_lean
 	if current_lean or exiting_lean then --use custom tilt interpolation 
-		local lean_angle = TacticalLean:GetLeanAngle(current_lean or exiting_lean)
-		local _t = Application:time()
---		lean_tilt = lean_tilt + self._camera_properties.target_tilt
-		local lean_timer = TacticalLean:GetTimer()
-		local lean_duration = TacticalLean:GetLeanDuration()
+		local lean_angle = TacticalLean:GetLeanAngle(lean_direction)
+		local lerp = TacticalLean:GetLeanLerp()
+--		local lean_duration = TacticalLean:GetLeanDuration()
+		--[[
 		if _t - lean_timer <= lean_duration then 
 			Console:SetTrackerValue("trackerb",string.format("%0.2f <= %0.2f",_t - lean_timer,lean_duration))
 			local lerp = math.max(0,_t - lean_timer) / lean_duration --smooth
 			if exiting_lean then 
 				lerp = 1 - lerp
 			end
+			--]]
 --			local lean_remaining = TacticalLean.lean_remaining
 --			local delta = math.sign(lean_remaining) * math.max(math.abs(lean_remaining) - dt,0)
 --			TacticalLean.lean_remaining = TacticalLean.lean_remaining - delta
 --			self._camera_properties.current_tilt = self._camera_properties.current_tilt + delta
 			self._camera_properties.current_tilt = lerp * lean_angle
-			
-		else
-			Console:SetTrackerValue("trackerb",string.format("%0.2f > %0.2f",_t -lean_timer,lean_duration))
-			self._camera_properties.current_tilt = lean_angle
-		end
+--		else
+--			Console:SetTrackerValue("trackerb",string.format("%0.2f > %0.2f",_t -lean_timer,lean_duration))
+--			self._camera_properties.current_tilt = lean_angle
+--		end
 	elseif self._camera_properties.current_tilt ~= self._camera_properties.target_tilt then
 		self._camera_properties.current_tilt = math.step(self._camera_properties.current_tilt, self._camera_properties.target_tilt, 150 * dt)
 	end
