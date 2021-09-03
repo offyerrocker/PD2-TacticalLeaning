@@ -17,6 +17,12 @@ function PlayerStandard:_check_action_deploy_bipod(t,input)
 	end
 end
 
+Hooks:PostHook(PlayerStandard,"_start_action_running","startrun_tacticallean",function(self,t)
+	if TacticalLean.current_lean then
+		TacticalLean:stop_lean()
+	end
+end)
+
 Hooks:PostHook(PlayerStandard,"_start_action_ducking","startduck_tacticallean",function(self,t)
 	if TacticalLean.current_lean then
 		TacticalLean:update_lean_stance()
@@ -34,6 +40,18 @@ end)
 --todo preventing leaning while ziplining (self:on_zipline)?
 
 --[[
+Hooks:PostHook(PlayerStandard,"_start_action_unequip_weapon","unswitchweapon_tacticallean",function(self,t)
+--called whenever you swap primary/secondary weapons ingame
+	if TacticalLean.current_lean then 
+		TacticalLean:stop_lean()
+	end
+end)
+Hooks:PostHook(PlayerStandard,"_start_action_equip","switchweapon_tacticallean",function(self,redirect,extra_time)
+--don't bother; this is only called at mission start
+	if TacticalLean.current_lean then 
+		TacticalLean:update_lean_stance()
+	end
+end)
 
 --local orig_check_zipline = PlayerStandard._check_action_zipline
 --function PlayerStandard:_check_action_zipline(t,input)

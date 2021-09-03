@@ -72,14 +72,15 @@ function FPCameraPlayerBase:_update_movement(t, dt)
 	mrotation.multiply(new_shoulder_rot, self._output_data.rotation)
 	mrotation.multiply(new_shoulder_rot, self._shoulder_stance.rotation)
 	mrotation.multiply(new_shoulder_rot, self._vel_overshot.rotation)
-	self:set_position(new_shoulder_pos)
-	self:set_rotation(new_shoulder_rot)
+	self:set_position(new_shoulder_pos) -- these two don't seem to do anything? 
+	self:set_rotation(new_shoulder_rot) -- not really sure why
 end
 
 function FPCameraPlayerBase:start_lean_transition_stance(reset_pos)
 	reset_pos = false --allowing reset_pos makes the gun warp more, so i'll investigate it later
 	local wpn = managers.player:local_player():movement():current_state()._equipped_unit:base()
-	local stance_name = wpn:get_stance_id()
+	local stance_name = wpn:get_stance_id() or "default"
+	stance_name = tweak_data.player.stances[stance_name] and stance_name or "default"
 	local default_stance = tweak_data.player.stances[stance_name].standard.shoulders.translation
 	local steelsight_stance = tweak_data.player.stances[stance_name].steelsight.shoulders.translation
 	local stance_mod = {translation = Vector3(0, 0, 0)}
@@ -90,16 +91,36 @@ function FPCameraPlayerBase:start_lean_transition_stance(reset_pos)
 	local lean_dist = TacticalLean:get_distance()
 	local angle = TacticalLean:get_angle(TacticalLean.current_lean)
 	local sign = math.sign(angle)
-	local tr_mod = Vector3(sign * lean_dist,0,-1)
+	local result = -2
+--	angle / 2
 	
+	local tr_mod = Vector3(sign * lean_dist,0,result)
+	
+--	KineticHUD:c_log(result,"RESULT")
+	--[[
+	
+	9, tan(9) = 7.4 = -0.452
+	
+	
+	--]]
 	self._shoulder_stance.transition = {}
 	self._shoulder_stance.transition.start_translation = Vector3(0,0,0)
 	self._shoulder_stance.transition.end_translation = Vector3(0,0,0)
 	local transition = self._shoulder_stance.transition--{}
 
---todo make weapon rotation roll lerp along with lean angle?
+--[[ i have no idea why i wrote this or how it is functionally different
+	if is_steelsight then 
+		local orig_rot = tweak_data.player.stances[stance_name].steelsight.shoulders.rotation
+		local new_rot = Rotation(orig_rot:yaw(),orig_rot:pitch(),orig_rot:roll() + 1.1)
+		transition.end_rotation = new_rot --self._shoulder_stance.rotation
+	else
+		local orig_rot = tweak_data.player.stances[stance_name].standard.shoulders.rotation
+		transition.end_rotation = orig_rot
+	end
+--]]
 	transition.end_rotation = self._shoulder_stance.rotation
-	transition.duration = 0.2 --not affected by steelsight enter time multipliers
+	
+	transition.duration = TacticalLean:get_lean_duration() --not affected by steelsight enter time multipliers
 	
 	if reset_pos then 
 		transition.start_translation = is_steelsight and steelsight_stance or default_stance

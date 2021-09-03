@@ -4,16 +4,26 @@ local TacLean = _G.TacticalLean
 TacLean.path = ModPath
 TacLean.save_path = SavePath .. "tactical_lean.txt"
 
-TacLean.move_anim_scale = 0.175 --testing 0.15 --affects only translation speed, not rotation speed, as rot speed is handled by the base game
+TacLean.lean_duration = 0.2
+TacLean.check_collision = true --disable this for better performance
+
+--TacLean.move_anim_scale = 0.175 --(OBSOLETE) affects only translation speed, not rotation speed, as rot speed is handled by the base game
 TacLean.move_anim_t = -1 --will be set to Application:time or TimerManager:game():time()
 TacLean.current_lean = false
 TacLean.exiting_lean = false
+
+local state_whitelist = {
+	carry = true,
+	clean = true,
+	standard = true,
+	mask_off = true
+}
+
 TacLean.settings = {
 	lean_distance = 30,
 	toggle_lean = false,
 	lean_angle = 10
 }
-
 
 function TacLean:anim_t(new)
 	if new then 
@@ -26,6 +36,10 @@ function TacLean:get_distance()
 	return TacLean.settings.lean_distance or 35
 end
 
+function TacLean:get_lean_duration()
+	return TacLean.lean_duration
+end
+
 function TacLean:get_angle(lr)	
 	local lean_lr = 0
 	if lr == "l" or lr == "left" then
@@ -36,23 +50,34 @@ function TacLean:get_angle(lr)
 	return lean_lr
 end
 
+function TacLean:collision_check_enabled()
+	return TacLean.check_collision
+end
+
 function TacLean:start_lean(lr)
+	if TacLean.exiting_lean then --or (TacLean.current_lean and lr == TacLean.current_lean) then
+		return
+	end
 	local player = managers.player and managers.player:player_unit()
 	if not player then
 		return
 	end
-	local state = managers.player:current_state()
+	if player:movement():current_state():running() then
+--		managers.hud:show_hint({text = "Cannot lean while running!"}) --hint is probably too annoying
+		return
+	end
+	local state = managers.player:current_state() 
 	--forbidden: 
 		--freefall, parachuting, driving, bleedout, incap (cloaker/taser down), taser, cuffed, dead/custody 
+	--well i ended up doing a whitelist for states anyway so whatever	
 	--DONE prevent bipodding when lean, instead of just lean when bipodding
 	--prevent lean when ziplining?
-	if not (state == "carry" or state == "clean" or state == "standard" or state == "mask_off") then
+	if state and not state_whitelist[state] then
 		managers.hud:show_hint({text = "Cannot lean in " .. tostring(state) .. " state!"})
 		return
 	end
-	
 	local my_pos = player:camera():position()	
-	local raw_headrot = managers.player:local_player():movement():m_head_rot()
+	local raw_headrot = player:movement():m_head_rot()
 	local headrot = Vector3()
 	
 	headrot = (raw_headrot:x() * (TacticalLean:get_distance() * 1) * (TacticalLean:get_angle(lr) < 0 and -1 or 1))
@@ -80,7 +105,10 @@ function TacLean:start_lean(lr)
 end
 
 function TacticalLean:update_lean_stance(exiting)
-	managers.player:local_player():camera():camera_unit():base():start_lean_transition_stance(exiting) --experimental transition fix, promising but broken as hell
+	local player = managers.player:local_player()
+	if alive(player) then
+		player:camera():camera_unit():base():start_lean_transition_stance(exiting) --experimental transition fix, promising but broken as hell
+	end
 --	managers.player:local_player():camera():camera_unit():base():update_lean_stance(exiting)	
 --	managers.player:local_player():camera():camera_unit():base():set_target_tilt(lean_lr) --old breakneck tilt method
 end
@@ -114,8 +142,16 @@ function TacLean:Save()
 	end
 end
 
-Hooks:Add("LocalizationManagerPostInit", "LocalizationManagerPostInit_TacticalLean", function(loc)
-	loc:load_localization_file( TacLean.path .. "en.txt")
+
+Hooks:Add("LocalizationManagerPostInit", "LocalizationManagerPostInit_TacticalLean", function( loc )
+	for _, filename in pairs(file.GetFiles(TacLean.path .. "loc/")) do
+		local str = filename:match('^(.*).txt$')
+		if str and Idstring(str) and Idstring(str):key() == SystemInfo:language():key() then
+			loc:load_localization_file(TacLean.path .. "loc/" .. filename)
+			break
+		end
+	end
+	loc:load_localization_file( TacLean.path .. "loc/en.txt")
 end)
 
 Hooks:Add( "MenuManagerInitialize", "MenuManagerInitialize_TacticalLean", function(menu_manager)
