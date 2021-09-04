@@ -14,24 +14,37 @@ TacticalLean.path = ModPath
 TacticalLean.save_path = SavePath .. "tactical_lean.txt"
 TacticalLean.default_localization_path = ModPath .. "localization/english.json"
 TacticalLean.options_menu_path = ModPath .. "menu/options.json"
-TacticalLean.KEYBIND_LEAN_LEFT = "keybindid_taclean_left"
-TacticalLean.KEYBIND_LEAN_RIGHT = "keybindid_taclean_right"
-TacticalLean.LEAN_DURATION = 0.2
-TacticalLean.CHECK_COLLISION = true
 TacticalLean.STATE_WHITELIST = {
 	carry = true,
 	clean = true,
 	standard = true,
 	mask_off = true
 }
-TacticalLean.STATE_BLOCKED_STRINGS = {
-	downed = "hud_taclean_state_blocked_downed"
+TacticalLean.STATE_BLOCKED_STRINGS = { --disabled for now, would probably be more annoying than helpful
+	downed = false and "hud_taclean_state_blocked_downed"
 }
+TacticalLean.input_cache = {} --only used for toggle mode
+TacticalLean.output_cache = {} --only used for toggle mode
+
+--you can play with the below variables if you like, but be careful!
+
+TacticalLean.LEAN_DURATION = 0.2
+TacticalLean.CHECK_COLLISION = false
+
+TacticalLean.KEYBIND_LEAN_LEFT = "keybindid_taclean_left" --these are blt keybind ids
+TacticalLean.KEYBIND_LEAN_RIGHT = "keybindid_taclean_right"
+
+--these are playerstandard input names (table keys technically but not the keyboard kind)
+TacticalLean.CONTROLLER_LEAN_LEFT = "btn_run_state"
+TacticalLean.CONTROLLER_LEAN_RIGHT = "btn_meleet_state"
+--that typo is not on my side
 
 TacticalLean.settings = {
 	lean_distance = 30, --in cm
 	lean_angle = 10, --in degrees
-	toggle_lean = false
+	toggle_lean = false,
+	controller_mode = false,
+	controller_auto_unlean = false
 }
 
 TacticalLean.lean_direction = false 
@@ -47,10 +60,16 @@ TacticalLean.exiting_lean = false
 --boolean
 --describes whether or not the player is exiting a lean
 
+
+
+--==================== SETTINGS =====================
+
+--returns the player's lean distance setting
 function TacticalLean:GetLeanDistance()
 	return self.settings.lean_distance
 end
 
+--returns the player's lean angle setting
 function TacticalLean:GetLeanAngle(lr)
 	local lean_lr = 0
 	if lr == "left" then
@@ -61,49 +80,61 @@ function TacticalLean:GetLeanAngle(lr)
 	return lean_lr
 end
 
-function TacticalLean:GetLeanDirection()
-	return self.lean_direction
-end
-
-function TacticalLean:SetLeanDirection(lr)
-	self.lean_direction = lr
-end
-
-function TacticalLean:GetLeanLerp()
-	return self.lean_lerp
-end
-
-function TacticalLean:SetLeanLerp(f)
-	self.lean_lerp = f
-end
-
+--returns the time it takes for one lean action to complete
 function TacticalLean:GetLeanDuration()
 	return self.LEAN_DURATION
 end
 
+--returns whether or not collision checking for leaning is enabled
 function TacticalLean:IsCollisionCheckEnabled()
 	return self.CHECK_COLLISION
 end
 
-function TacticalLean:IsExitingLean()
-	return self.exiting_lean
-end
-
+--returns whether or not the user setting for toggle lean is enabled
 function TacticalLean:IsToggleModeEnabled()
 	return self.settings.toggle_lean
 end
 
-function TacticalLean:OnLeanStopped()
-	self:SetLeanDirection(false)
-	self.exiting_lean = false
-	self:SetLeanLerp(0)
+--returns whether or not the user setting for controller mode is enabled
+function TacticalLean:IsControllerModeEnabled()
+	return self.settings.controller_mode
+end
+
+--returns whether or not the user setting for controller auto-un-lean is enabled
+function TacticalLean:IsControllerAutoUnleanEnabled()
+	return self.settings.controller_auto_unlean
 end
 
 
 
+--==================== LEANING =====================
 
+--returns the direction ("left" or "right") of the current lean
+function TacticalLean:GetLeanDirection()
+	return self.lean_direction
+end
 
+--sets the direction ("left" or "right" or false) of the current lean
+function TacticalLean:SetLeanDirection(lr)
+	self.lean_direction = lr
+end
 
+--returns the progress of the current lean
+function TacticalLean:GetLeanLerp()
+	return self.lean_lerp
+end
+
+--sets the progress of the current lean
+function TacticalLean:SetLeanLerp(f)
+	self.lean_lerp = f
+end
+
+--returns the direction of the lean, if in the process of exiting a lean
+function TacticalLean:IsExitingLean()
+	return self.exiting_lean
+end
+
+--begin the process of leaning in a given direction, after some state and sanity checks
 function TacticalLean:StartLean(lr)
 	if self:IsExitingLean() then 
 		return
@@ -115,12 +146,12 @@ function TacticalLean:StartLean(lr)
 	end
 	local movement_ext = player:movement()
 	local state = movement_ext:current_state()
-	if state:running() then 
+	if state:running() or state:in_air() then 
 		--don't show a hint, too annoying
 		return
 	end
-	local state_name = player:current_state()
-	if self.STATE_WHITELIST[state_name] then 
+	local state_name = movement_ext:current_state_name()
+	if not self.STATE_WHITELIST[state_name] then 
 		local blocked_str = self.STATE_BLOCKED_STRINGS[state_name]
 		if blocked_str then 
 			managers.hud:show_hint({text = managers.localization:text(blocked_str)})
@@ -128,40 +159,66 @@ function TacticalLean:StartLean(lr)
 		
 		return
 	end
-	--todo raycast check for collision
+	
+	if self:IsCollisionCheckEnabled() then 
+		if self:RaycastCheck() then 
+--		managers.hud:show_hint({text = managers.localization:text("hud_taclean_state_blocked_generic")})
+			return
+		end
+	end
+	
 	if self:IsToggleModeEnabled() and lr and self:GetLeanDirection() == lr then
 		TacticalLean:StopLean()
 		return
 	end
 	self:SetLeanDirection(lr)
---	self:SetTimer(Application:time())
---	self.lean_remaining = self:GetLeanAngle(lr)
-	--self:SetLeanStanceTransition()
 end
 
+--reset some lean-related variables and start lean exit process
 function TacticalLean:StopLean()
 	if not self:IsExitingLean() then
-		--prevent anim glitching by repeatedly stopping lean without starting lean in between
 		self.exiting_lean = self:GetLeanDirection()
---		self:SetLeanStanceTransition(true)
+		
+		--for toggle mode only
+		self.input_cache.left_input = false
+		self.input_cache.right_input = false
+		self.output_cache.left_input = false
+		self.output_cache.right_input = false
 	end
---	self.lean_remaining = 0
 end
 
-function TacticalLean:SetLeanStanceTransition()
+--reset final lean-related variables on lean exit completed
+function TacticalLean:OnLeanStopped()
+	self:SetLeanDirection(false)
+	self.exiting_lean = false
+	self:SetLeanLerp(0)
+end
+
+--perform raycheck in the given direction to see if leaning would result in world collision; returns ray if collision is present
+function TacticalLean:RaycastCheck(lr)
 	local player = managers.player:local_player()
-	if alive(player) then
---		player:camera():camera_unit():base():start_lean_transition_stance(exiting) --experimental transition fix, promising but broken as hell
-	end
+	
+	local my_pos = player:camera():position()
+	local raw_headrot = player:camera():rotation()
+--	local raw_headrot = player:movement():m_head_rot()
+	local headrot = Vector3()
+	
+	local check_distance_lerp = self:GetLeanLerp()
+	
+	headrot = raw_headrot:x() * check_distance_lerp * self:GetLeanDistance() * math.sign(self:GetLeanAngle(lr))
+	
+	local new_pos = Vector3()
+	mvector3.set(new_pos,my_pos)
+	mvector3.add(new_pos,headrot)
+	
+	local ray = World:raycast("ray",my_pos,new_pos,"slot_mask",managers.slot:get_mask("world_geometry"))
+
+	return ray
 end
 
 
 
-
-
-
-
-
+--==================== I/O =====================
 
 function TacticalLean:Load()
 	local file = io.open(self.save_path, "r")
@@ -185,12 +242,17 @@ end
 
 
 
+--================= LOCALIZATION ===============
+
 Hooks:Add("LocalizationManagerPostInit", "LocalizationManagerPostInit_TacticalLean", function( loc )
 	if not BeardLib then 
 		loc:load_localization_file(TacticalLean.default_localization_path)
 	end
 end)
 
+
+
+--==================== MENU ====================
 
 Hooks:Add( "MenuManagerInitialize", "MenuManagerInitialize_TacticalLean", function(menu_manager)
 	MenuCallbackHandler.callback_taclean_toggle_lean = function(self,item)
@@ -206,16 +268,30 @@ Hooks:Add( "MenuManagerInitialize", "MenuManagerInitialize_TacticalLean", functi
 		TacticalLean.settings.lean_distance = tonumber(item:value())
 		TacticalLean:Save()
 	end	
+	
+	--due to adding the keybind via mod.txt, these callbacks are no longer used
 	MenuCallbackHandler.taclean_keybind_func_left = function(self)
-		if TacticalLean:IsToggleModeEnabled() then
-			TacticalLean:StartLean("left")
-		end
+--		if TacticalLean:IsToggleModeEnabled() then
+--			TacticalLean:StartLean("left")
+--		end
 	end
 	MenuCallbackHandler.taclean_keybind_func_right = function(self)
-		if TacticalLean:IsToggleModeEnabled() then
-			TacticalLean:StartLean("right")
-		end
+--		if TacticalLean:IsToggleModeEnabled() then
+--			TacticalLean:StartLean("right")
+--		end
 	end
+	
+	MenuCallbackHandler.callback_taclean_toggle_controller_mode = function(self,item)
+		local value = item:value() == "on"
+		TacticalLean.settings.controller_mode = value
+		TacticalLean:Save()
+	end
+	MenuCallbackHandler.callback_taclean_toggle_autounlean = function(self,item)
+		local value = item:value() == "on"
+		TacticalLean.settings.controller_auto_unlean = value
+		TacticalLean:Save()
+	end
+	
 	MenuCallbackHandler.callback_taclean_close = function(this)
 		TacticalLean:Save()
 	end
@@ -226,160 +302,3 @@ Hooks:Add( "MenuManagerInitialize", "MenuManagerInitialize_TacticalLean", functi
 	HoldTheKey:Add_Keybind(TacticalLean.KEYBIND_LEAN_RIGHT)
 
 end)
-
-
-
-do return end
-
-TacticalLean.lean_timer = 0
-TacticalLean.current_lean = false
-TacticalLean.exiting_lean = false
-
-function TacticalLean:GetTimer()
-	return self.lean_timer or 0
-end
-
-function TacticalLean:SetTimer(t)
-	self.lean_timer = t
-end
-
-function TacticalLean:GetCurrentLean()
-	return self.current_lean
-end
-
-function TacticalLean:SetCurrentLean(lr)
-	self.current_lean = lr
-end
-
-function TacticalLean:GetLeanDuration()
-	return self.LEAN_DURATION
-end
-
-function TacticalLean:IsCollisionCheckEnabled()
-	return self.CHECK_COLLISION
-end
-
-function TacticalLean:IsExitingLean()
-	return self.exiting_lean
-end
-
-function TacticalLean:IsToggleModeEnabled()
-	return self.settings.toggle_lean
-end
-
-function TacticalLean:StartLean(lr)
-	if self:IsExitingLean() then 
-		return
-	end
-	local pm = managers.player
-	local player = managers.player:local_player() 
-	if not alive(player) then 
-		return
-	end
-	local movement_ext = player:movement()
-	local state = movement_ext:current_state()
-	if state:running() then 
-		--don't show a hint, too annoying
-		return
-	end
-	local state_name = player:current_state()
-	if self.STATE_WHITELIST[state_name] then 
-		local blocked_str = self.STATE_BLOCKED_STRINGS[state_name]
-		if blocked_str then 
-			managers.hud:show_hint({text = managers.localization:text(blocked_str)})
-		end
-		
-		return
-	end
-	--todo raycast check for collision
-	if self:IsToggleModeEnabled() and lr and self:GetCurrentLean() == lr then
-		TacLean:StopLean()
-		return
-	end
-	self:SetCurrentLean(lr)
-	self:SetTimer(Application:time())
---	self.lean_remaining = self:GetLeanAngle(lr)
-	--self:SetLeanStanceTransition()
-end
-
-function TacticalLean:StopLean()
-	if not self:IsExitingLean() then
-		--prevent anim glitching by repeatedly stopping lean without starting lean in between
-		self:SetTimer(Application:time())
-		self.exiting_lean = self:GetCurrentLean()
---		self:SetLeanStanceTransition(true)
-	end
---	self.lean_remaining = 0
-end
-
-
-function TacticalLean:OnLeanStopped()
---	self.lean_remaining = 0
-	self:SetCurrentLean(false)
-	self.exiting_lean = false
-	self.lean_timer = 0
-end
-
-function TacticalLean:SetLeanStanceTransition()
-	local player = managers.player:local_player()
-	if alive(player) then
---		player:camera():camera_unit():base():start_lean_transition_stance(exiting) --experimental transition fix, promising but broken as hell
-	end
-end
-
-function TacticalLean:RaycastCheck(lr)
---[[
-	local my_pos = player:camera():position()	
-	local raw_headrot = player:movement():m_head_rot()
-	local headrot = Vector3()
-	
-	headrot = (raw_headrot:x() * (self:GetLeanDistance() * 1) * (self:GetLeanAngle(lr) < 0 and -1 or 1))
-	
-	local new_pos = Vector3()
-	mvector3.set(new_pos,my_pos)
-	mvector3.add(new_pos,headrot)
-	
-	local ray = World:raycast("ray",my_pos,new_pos,"slot_mask",managers.slot:get_mask("world_geometry"))
-	if ray then
---		managers.hud:show_hint({text = managers.localization:text("hud_taclean_state_blocked_generic")})
-		return
-	end
-	--]]
-end
-
-do return end
-
-function TacLean:start_lean(lr)
-	if TacLean.exiting_lean then --or (TacLean.current_lean and lr == TacLean.current_lean) then
-		return
-	end
-	local player = managers.player and managers.player:player_unit()
-	if not player then
-		return
-	end
-	if player:movement():current_state():running() then
---		managers.hud:show_hint({text = "Cannot lean while running!"}) --hint is probably too annoying
-		return
-	end
-	local state = managers.player:current_state() 
-	--forbidden: 
-		--freefall, parachuting, driving, bleedout, incap (cloaker/taser down), taser, cuffed, dead/custody 
-	--well i ended up doing a whitelist for states anyway so whatever
-	
-	if state and not state_whitelist[state] then
-		managers.hud:show_hint({text = "Cannot lean in " .. tostring(state) .. " state!"})
-		return
-	end
-
-	
-	TacLean.exiting_lean = false
-	if TacLean.settings.toggle_lean and lr and TacLean.current_lean == lr then --
-		TacLean:stop_lean()
-		return
-	end
-	TacLean:anim_t(Application:time())
-	TacLean.current_lean = lr
-	local lean_lr = TacLean:get_angle(lr)
-	TacticalLean.lean_tilt = lean_lr
-	TacticalLean:update_lean_stance()
-end

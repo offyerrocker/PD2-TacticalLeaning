@@ -35,7 +35,7 @@
 		{
 			"type" : "divider",
 			"size" : 24
-		},		
+		},
 		{
 			"type" : "slider",
 			"id" : "id_taclean_slider_distance",
@@ -59,6 +59,26 @@
 			"min" : 0,
 			"max" : 45,
 			"step" : 1
+		},
+		{
+			"type" : "divider",
+			"size" : 24
+		},
+		{
+			"type" : "toggle",
+			"id" : "taclean_togglecontrollermode_id",
+			"title" : "taclean_togglecontrollermode_title",
+			"description" : "taclean_togglecontrollermode_desc",
+			"callback" : "callback_taclean_toggle_controller_mode",
+			"value" : "controller_mode"
+		},
+		{
+			"type" : "toggle",
+			"id" : "taclean_toggle_autounlean_id",
+			"title" : "taclean_toggle_autounlean_title",
+			"description" : "taclean_toggle_autounlean_desc",
+			"callback" : "callback_taclean_toggle_autounlean",
+			"value" : "controller_auto_unlean"
 		}
 	]
 

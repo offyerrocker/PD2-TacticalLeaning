@@ -3,7 +3,7 @@
 	"description" : "'50,000 people use to heist here, now it's a ghost town.'\nAdds the ability to look and shoot around corners, using two keybinds. Requires HoldsTheKey mod.",
 	"author" : "Offyerrocker",
 	"contact" : "Discord: Offyerrocker#3878",
-	"version" : "2.1",
+	"version" : "3.0",
 	"blt_version" : 2,
 	"image" : "taclean_icon.png"
 	"color" : "255 64 0",
@@ -31,6 +31,10 @@
 		{
 			"hook_id" : "lib/units/cameras/fpcameraplayerbase",
 			"script_path" : "lua/fpcameraplayerbase.lua"
+		},
+		{
+			"hook_id" : "lib/managers/menu/menunodegui",
+			"script_path" : "lua/menunodegui.lua"
 		}
 	],
 	"keybinds" : [
