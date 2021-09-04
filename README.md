@@ -3,14 +3,16 @@
  Adds the ability to "lean", similar to games like Rainbow Six: Siege.
  This does not have additional effects.
 
-Requires the mod "HoldTheKey" in order to work!
-	Download link and instructions for HoldTheKey can be found here:
+### Requires the mod "HoldTheKey" in order to work!
+
+* Download link and instructions for HoldTheKey can be found here:
 	https://modworkshop.net/mod/22253
 
-	Or, an alternate link to its GitHub repository, if ModWorkshop is down:
+* Or, an alternate link to its GitHub repository, if ModWorkshop is down:
 	https://github.com/offyerrocker/HoldTheKey
 
 
+### Usage
 
 To use this mod, bind a key in the Mod Keybinds menu or the Tactical Leaning mod options menu, and use those keys in-game to lean left or right.
 
