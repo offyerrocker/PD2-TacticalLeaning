@@ -5,7 +5,7 @@
 	"contact" : "Discord: Offyerrocker#3878",
 	"version" : "3.0",
 	"blt_version" : 2,
-	"image" : "taclean_icon.png"
+	"image" : "icon.png"
 	"color" : "255 64 0",
 	"hooks" : [
 		{
