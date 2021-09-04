@@ -1,12 +1,3 @@
-if _G.IS_VR then 
-	return
-end
-
---[[
-
-managers.player:local_player():camera():camera_unit():base():set_pitch(90)
-
---]]
 
 TacticalLean = _G.TacticalLean or {}
 

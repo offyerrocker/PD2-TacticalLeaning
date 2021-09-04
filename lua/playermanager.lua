@@ -13,17 +13,19 @@ Hooks:PostHook(PlayerManager,"update","PlayerManagerUpdate_TacticalLean",functio
 	local current_lean = TacticalLean:GetLeanDirection()
 	
 	local left_input,right_input 
-	if TacticalLean:IsControllerModeEnabled() then
-		local state = player:movement():current_state()
-		if state:in_steelsight() then 
-			local all_input = state:_get_input(_t,dt,Application:paused())
-			
-			left_input = all_input[TacticalLean.CONTROLLER_LEAN_LEFT]
-			right_input = all_input[TacticalLean.CONTROLLER_LEAN_RIGHT]
+	if not managers.hud._chat_focus then 
+		if TacticalLean:IsControllerModeEnabled() then
+			local state = player:movement():current_state()
+			if state:in_steelsight() then 
+				local all_input = state:_get_input(_t,dt,Application:paused())
+				
+				left_input = all_input[TacticalLean.CONTROLLER_LEAN_LEFT]
+				right_input = all_input[TacticalLean.CONTROLLER_LEAN_RIGHT]
+			end
+		else
+			left_input = HoldTheKey:Keybind_Held(TacticalLean.KEYBIND_LEAN_LEFT)
+			right_input = HoldTheKey:Keybind_Held(TacticalLean.KEYBIND_LEAN_RIGHT)
 		end
-	else
-		left_input = HoldTheKey:Keybind_Held(TacticalLean.KEYBIND_LEAN_LEFT)
-		right_input = HoldTheKey:Keybind_Held(TacticalLean.KEYBIND_LEAN_RIGHT)
 	end
 	
 
