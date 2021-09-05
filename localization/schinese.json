@@ -1,13 +1,22 @@
 {
-	"taclean_title" : "战术倾斜MOD选项",
-	"taclean_togglelean_title" : "切换倾斜",
-	"taclean_togglelean_desc" : "如果启用，只需按一次即可以朝一个方向倾斜；否则，必须长按以倾斜于一个方向。",
-	"taclean_keybind_right_title" : "向右倾斜",
-	"taclean_keybind_right_desc" : "绑定一个键位应用于向右倾斜",
-	"taclean_keybind_left_title" : "向左倾斜",
-	"taclean_keybind_left_desc" : "绑定一个键位应用于向左倾斜",
-	"taclean_slider_distance_title" : "倾斜距离",
-	"taclean_slider_distance_desc" : "改变倾斜距离",
-	"taclean_slider_angle_title" : "倾斜角度",
-	"taclean_slider_angle_desc" : "改变倾斜角度"
+	"taclean_title" : "Tactical Leaning模组设置",
+	"taclean_togglelean_title" : "切换探头",
+	"taclean_togglelean_desc" : "如果启用，只需按下键位即可以持续探头；否则，必须按住键位以持续探头。",
+	"taclean_keybind_right_title" : "向右探头",
+	"taclean_keybind_right_desc" : "绑定一个键位应用于向右探头",
+	"taclean_keybind_left_title" : "向左探头",
+	"taclean_keybind_left_desc" : "绑定一个键位应用于向左探头",
+	"taclean_slider_distance_title" : "探头距离",
+	"taclean_slider_distance_desc" : "改变探头距离",
+	"taclean_slider_angle_title" : "探头角度",
+	"taclean_slider_angle_desc" : "改变探头角度",
+	"taclean_togglecontrollermode_title" : "控制器模式",
+	"taclean_togglecontrollermode_desc" : "在瞄准时按下控制器的 \"冲刺\" 或 \"近战\"键位时将相应的向左/向右探头",
+	"taclean_toggle_autounlean_title" : "控制器:自动取消探头",
+	"taclean_toggle_autounlean_desc" : "在您使用控制器时，退出瞄准状态会自动取消探头",
+	"hud_taclean_state_blocked_downed" : "倒地时禁用探头！",
+	"hud_taclean_state_blocked_generic" : "此处无法探头！",
+	"menu_taclean_missing_htk_prompt_title" : "缺少依赖模组：HoldTheKey！",
+	"menu_taclean_missing_htk_prompt_desc" : "您尚未安装HoldTheKey模组,或者您没有正确安装它\n缺少该模组会导致游戏崩溃或本模组失效！\nHoldTheKey是Tactical Leaning模组的依赖模组！"
+
 }
