@@ -21,7 +21,7 @@ TacticalLean.output_cache = {} --only used for toggle mode
 
 --you can play with the below variables if you like, but be careful!
 
-TacticalLean.LEAN_DURATION = 0.15
+TacticalLean.LEAN_DURATION = 0.10
 TacticalLean.EXIT_DURATION = 0.15
 TacticalLean.CHECK_COLLISION = false
 
@@ -166,6 +166,7 @@ function TacticalLean:StartLean(lr)
 		end
 	end
 	
+	--todo remove this if it's redundant
 	if self:IsToggleModeEnabled() and lr and self:GetLeanDirection() == lr then
 		TacticalLean:StopLean()
 		return
@@ -305,10 +306,12 @@ function TacticalLean:Update(_t,dt)
 	local lean_duration = self:GetLeanDuration()
 	local exit_duration = self:GetExitDuration()
 	
+	local exiting_lean = self:IsExitingLean()
 	local current_lerp = self:GetLeanLerp()
-	if self:IsExitingLean() then
+	if exiting_lean then
 		if current_lerp > 0 then 
-			self:SetLeanLerp(math.max(current_lerp - (dt / exit_duration),0))
+			current_lerp = math.max(current_lerp - (dt / exit_duration),0)
+			self:SetLeanLerp(current_lerp)
 --			Console:SetTrackerValue("trackerc","Exiting " .. __t)
 		else
 --			Console:SetTrackerValue("trackerc","Done exiting " .. __t)
@@ -316,7 +319,8 @@ function TacticalLean:Update(_t,dt)
 		end
 	elseif current_lean then
 		if current_lerp < 1 then
-			self:SetLeanLerp(math.min(current_lerp + (dt / lean_duration),1))
+			current_lerp = math.min(current_lerp + (dt / lean_duration),1)
+			self:SetLeanLerp(current_lerp)
 --			Console:SetTrackerValue("trackerc","Starting " .. __t)
 --		else
 --			Console:SetTrackerValue("trackerc","Holding " .. __t)
@@ -325,7 +329,6 @@ function TacticalLean:Update(_t,dt)
 --	Console:SetTrackerValue("trackerb",string.format("%0.2f / %0.2f",TacticalLean:GetLeanLerp() or 0,lean_duration))
 
 	
-	local exiting_lean = self:IsExitingLean()
 	local new_lean_direction = false
 	local pressed_any
 	if left_input then
@@ -351,12 +354,16 @@ function TacticalLean:Update(_t,dt)
 				--...and then start the new lean
 				self:StartLean(new_lean_direction)
 			end
+		elseif exiting_lean then 
+			--pressed same button to cancel exit; un-cancel!
+			self.exiting_lean = false
 		end
 	elseif current_lean then
 		--if no lean input, and currently leaning,
 		--then stop leaning
 		self:StopLean()
 	end
+--	Console:SetTrackerValue("trackerd",string.format("%0.2f",current_lerp))
 --	Console:SetTrackerValue("trackere","leaning " .. tostring(new_lean_direction) .. ", exiting_lean " .. tostring(TacticalLean:IsExitingLean()))
 end
 
