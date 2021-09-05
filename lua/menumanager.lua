@@ -14,12 +14,15 @@ TacticalLean.STATE_WHITELIST = {
 TacticalLean.STATE_BLOCKED_STRINGS = { --disabled for now, would probably be more annoying than helpful
 	downed = false and "hud_taclean_state_blocked_downed"
 }
+TacticalLean.DIRECTION_RIGHT = "right"
+TacticalLean.DIRECTION_LEFT = "left"
 TacticalLean.input_cache = {} --only used for toggle mode
 TacticalLean.output_cache = {} --only used for toggle mode
 
 --you can play with the below variables if you like, but be careful!
 
-TacticalLean.LEAN_DURATION = 0.2
+TacticalLean.LEAN_DURATION = 0.15
+TacticalLean.EXIT_DURATION = 0.15
 TacticalLean.CHECK_COLLISION = false
 
 TacticalLean.KEYBIND_LEAN_LEFT = "keybindid_taclean_left" --these are blt keybind ids
@@ -71,9 +74,14 @@ function TacticalLean:GetLeanAngle(lr)
 	return lean_lr
 end
 
---returns the time it takes for one lean action to complete
+--returns the time it takes for one lean start to complete
 function TacticalLean:GetLeanDuration()
 	return self.LEAN_DURATION
+end
+
+--returns the time it takes for one lean exit to complete
+function TacticalLean:GetExitDuration()
+	return self.EXIT_DURATION
 end
 
 --returns whether or not collision checking for leaning is enabled

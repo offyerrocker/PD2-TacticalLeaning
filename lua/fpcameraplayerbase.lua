@@ -142,6 +142,8 @@ function FPCameraPlayerBase:_update_rot(axis, unscaled_axis,...)
 	--changed this one line below (adds positional offset to both the camera and the viewmodel)
 	new_head_pos = new_head_pos + vec_lean_right
 	
+--	TacticalLean.previous_raycast_from = new_head_pos
+	
 	mvector3.add(new_head_pos, self._head_stance.translation)
 
 	self._input.look = axis

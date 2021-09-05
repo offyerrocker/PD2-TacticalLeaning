@@ -2,7 +2,8 @@ if _G.IS_VR then
 	return
 end
 
-Hooks:PostHook(PlayerManager,"update","PlayerManagerUpdate_TacticalLean",function(self,_t,dt)
+Hooks:PostHook(PlayerManager,"update","PlayerManagerUpdate_TacticalLean",function(_t,dt)
+
 	local player = self:local_player()
 	if not alive(player) then 
 		return
@@ -88,11 +89,12 @@ Hooks:PostHook(PlayerManager,"update","PlayerManagerUpdate_TacticalLean",functio
 	
 	
 	local lean_duration = TacticalLean:GetLeanDuration()
+	local exit_duration = TacticalLean:GetExitDuration()
 	
 	local current_lerp = TacticalLean:GetLeanLerp()
 	if TacticalLean:IsExitingLean() then
 		if current_lerp > 0 then 
-			TacticalLean:SetLeanLerp(math.max(current_lerp - (dt / lean_duration),0))
+			TacticalLean:SetLeanLerp(math.max(current_lerp - (dt / exit_duration),0))
 --			Console:SetTrackerValue("trackerc","Exiting " .. __t)
 		else
 --			Console:SetTrackerValue("trackerc","Done exiting " .. __t)
@@ -109,22 +111,38 @@ Hooks:PostHook(PlayerManager,"update","PlayerManagerUpdate_TacticalLean",functio
 --	Console:SetTrackerValue("trackerb",string.format("%0.2f / %0.2f",TacticalLean:GetLeanLerp() or 0,lean_duration))
 
 	
-	local new_lean_direction
+	local exiting_lean = TacticalLean:IsExitingLean()
+	local new_lean_direction = false
+	local pressed_any
 	if left_input then
-		new_lean_direction = "left"
-		if current_lean ~= new_lean_direction then
-			TacticalLean:StartLean(new_lean_direction)
+		pressed_any = true
+		if current_lean ~= TacticalLean.DIRECTION_LEFT then
+			new_lean_direction = TacticalLean.DIRECTION_LEFT
 		end
 	end
 	if right_input then
-		new_lean_direction = "right"
-		if current_lean ~= new_lean_direction then
-			TacticalLean:StartLean(new_lean_direction)
+		pressed_any = true
+		if current_lean ~= TacticalLean.DIRECTION_RIGHT then
+			new_lean_direction = TacticalLean.DIRECTION_RIGHT
 		end
 	end
-	local exiting_lean = TacticalLean:IsExitingLean()
-	if not new_lean_direction and current_lean and not exiting_lean then
+	
+	if pressed_any then 
+		if new_lean_direction then 
+			--if user wants to switch lean sides, 
+			if current_lean then 
+				--...then stop leaning first
+				TacticalLean:StopLean()
+			else
+				--...and then start the new lean
+				TacticalLean:StartLean(new_lean_direction)
+			end
+		end
+	elseif current_lean then
+		--if no lean input, and currently leaning,
+		--then stop leaning
 		TacticalLean:StopLean()
 	end
 --	Console:SetTrackerValue("trackere","leaning " .. tostring(new_lean_direction) .. ", exiting_lean " .. tostring(TacticalLean:IsExitingLean()))
-end)
+end
+)
