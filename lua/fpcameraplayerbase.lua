@@ -11,6 +11,14 @@ local mvec2 = Vector3()
 local mvec3 = Vector3()
 local mvec4 = Vector3()
 
+local mvec3_set = mvector3.set
+local mvec3_add = mvector3.add
+local mvec_copy = mvector3.copy
+local mvec3_rotate_with = mvector3.rotate_with
+
+local mrot_set_zero = mrotation.set_zero
+local mrot_multiply = mrotation.multiply
+
 local bezier_values = {
 	0,
 	0,
@@ -33,7 +41,7 @@ function FPCameraPlayerBase:_update_movement(t, dt,...)
 
 	self._parent_unit:m_position(new_head_pos)
 
-	mvector3.add(new_head_pos, self._head_stance.translation)
+	mvec3_add(new_head_pos, self._head_stance.translation)
 
 	local stick_input_x = 0
 	local stick_input_y = 0
@@ -52,9 +60,9 @@ function FPCameraPlayerBase:_update_movement(t, dt,...)
 	local cam_offset_rot = mrot3
 
 	mrotation.set_look_at(cam_offset_rot, look_vec, math.UP)
-	mrotation.set_zero(new_head_rot)
-	mrotation.multiply(new_head_rot, self._head_stance.rotation)
-	mrotation.multiply(new_head_rot, cam_offset_rot)
+	mrot_set_zero(new_head_rot)
+	mrot_multiply(new_head_rot, self._head_stance.rotation)
+	mrot_multiply(new_head_rot, cam_offset_rot)
 
 	data.pitch = look_polar_pitch
 	data.spin = look_polar_spin
@@ -70,14 +78,6 @@ function FPCameraPlayerBase:_update_movement(t, dt,...)
 		
 		local target_tilt = self._camera_properties.target_tilt or 0
 		self._camera_properties.current_tilt = target_tilt + (lerp * lean_angle)
-		--[[
-		--todo add to current tilt interp
-		if self._camera_properties.current_tilt ~= self._camera_properties.target_tilt then
-			self._camera_properties.current_tilt = math.step(self._camera_properties.current_tilt, self._camera_properties.target_tilt, 150 * dt) + (dt * lerp * lean_angle)
-		elseif self._camera_properties.target_tilt then
-			self._camera_properties.current_tilt = self._camera_properties.target_tilt + (lerp * lean_angle)
-		end
-		--]]
 	elseif self._camera_properties.current_tilt ~= self._camera_properties.target_tilt then
 		self._camera_properties.current_tilt = math.step(self._camera_properties.current_tilt, self._camera_properties.target_tilt, 150 * dt)
 	end
@@ -91,14 +91,14 @@ function FPCameraPlayerBase:_update_movement(t, dt,...)
 	self._output_data.position = new_head_pos
 
 
-	mvector3.set(new_shoulder_pos, self._shoulder_stance.translation)
-	mvector3.add(new_shoulder_pos, self._vel_overshot.translation)
-	mvector3.rotate_with(new_shoulder_pos, self._output_data.rotation)
-	mvector3.add(new_shoulder_pos, new_head_pos)
-	mrotation.set_zero(new_shoulder_rot)
-	mrotation.multiply(new_shoulder_rot, self._output_data.rotation)
-	mrotation.multiply(new_shoulder_rot, self._shoulder_stance.rotation)
-	mrotation.multiply(new_shoulder_rot, self._vel_overshot.rotation)
+	mvec3_set(new_shoulder_pos, self._shoulder_stance.translation)
+	mvec3_add(new_shoulder_pos, self._vel_overshot.translation)
+	mvec3_rotate_with(new_shoulder_pos, self._output_data.rotation)
+	mvec3_add(new_shoulder_pos, new_head_pos)
+	mrot_set_zero(new_shoulder_rot)
+	mrot_multiply(new_shoulder_rot, self._output_data.rotation)
+	mrot_multiply(new_shoulder_rot, self._shoulder_stance.rotation)
+	mrot_multiply(new_shoulder_rot, self._vel_overshot.rotation)
 	
 	self:set_position(new_shoulder_pos)
 	self:set_rotation(new_shoulder_rot)
@@ -139,12 +139,15 @@ function FPCameraPlayerBase:_update_rot(axis, unscaled_axis,...)
 	local new_head_rot = mrot2
 
 	self._parent_unit:m_position(new_head_pos)
-	--changed this one line below (adds positional offset to both the camera and the viewmodel)
+	--also changed this one line below (adds positional offset to both the camera and the viewmodel)
 	new_head_pos = new_head_pos + vec_lean_right
 	
---	TacticalLean.previous_raycast_from = new_head_pos
+	--this below line is there to enable compatibility support with other mods that may require the adjusted head position;
+	--eg. "Less Inaccurate Weapon Laser" by TdlQ seems to encounter issues with getting the head position when combined with this mod
+	--possibly due to code execution order
+	TacticalLean.previous_raycast_from = mvec3_copy(new_head_po	s)
 	
-	mvector3.add(new_head_pos, self._head_stance.translation)
+	mvec3_add(new_head_pos, self._head_stance.translation)
 
 	self._input.look = axis
 	self._input.look_multiplier = self._parent_unit:base():controller():get_setup():get_connection("look"):get_multiplier()
@@ -178,9 +181,9 @@ function FPCameraPlayerBase:_update_rot(axis, unscaled_axis,...)
 	mrotation.set_look_at(cam_offset_rot, look_vec, math.UP)
 
 	if self._animate_pitch == nil then
-		mrotation.set_zero(new_head_rot)
-		mrotation.multiply(new_head_rot, self._head_stance.rotation)
-		mrotation.multiply(new_head_rot, cam_offset_rot)
+		mrot_set_zero(new_head_rot)
+		mrot_multiply(new_head_rot, self._head_stance.rotation)
+		mrot_multiply(new_head_rot, cam_offset_rot)
 
 		data.pitch = look_polar_pitch
 		data.spin = look_polar_spin
@@ -192,7 +195,7 @@ function FPCameraPlayerBase:_update_rot(axis, unscaled_axis,...)
 		self._p_exit = false
 		self._output_data.rotation = self._parent_unit:movement().fall_rotation
 
-		mrotation.multiply(self._output_data.rotation, self._parent_unit:camera():rotation())
+		mrot_multiply(self._output_data.rotation, self._parent_unit:camera():rotation())
 
 		data.spin = self._output_data.rotation:y():to_polar().spin
 	else
@@ -221,36 +224,36 @@ function FPCameraPlayerBase:_update_rot(axis, unscaled_axis,...)
 	local bipod_pos = Vector3(0, 0, 0)
 	local bipod_rot = new_shoulder_rot
 
-	mvector3.set(bipod_pos, bipod_weapon_translation)
-	mvector3.rotate_with(bipod_pos, self._output_data.rotation)
-	mvector3.add(bipod_pos, new_head_pos)
-	mvector3.set(new_shoulder_pos, self._shoulder_stance.translation)
-	mvector3.add(new_shoulder_pos, self._vel_overshot.translation)
-	mvector3.rotate_with(new_shoulder_pos, self._output_data.rotation)
-	mvector3.add(new_shoulder_pos, new_head_pos)
-	mrotation.set_zero(new_shoulder_rot)
-	mrotation.multiply(new_shoulder_rot, self._output_data.rotation)
-	mrotation.multiply(new_shoulder_rot, self._shoulder_stance.rotation)
-	mrotation.multiply(new_shoulder_rot, self._vel_overshot.rotation)
+	mvec3_set(bipod_pos, bipod_weapon_translation)
+	mvec3_rotate_with(bipod_pos, self._output_data.rotation)
+	mvec3_add(bipod_pos, new_head_pos)
+	mvec3_set(new_shoulder_pos, self._shoulder_stance.translation)
+	mvec3_add(new_shoulder_pos, self._vel_overshot.translation)
+	mvec3_rotate_with(new_shoulder_pos, self._output_data.rotation)
+	mvec3_add(new_shoulder_pos, new_head_pos)
+	(new_shoulder_rot)
+	mrot_multiply(new_shoulder_rot, self._output_data.rotation)
+	mrot_multiply(new_shoulder_rot, self._shoulder_stance.rotation)
+	mrot_multiply(new_shoulder_rot, self._vel_overshot.rotation)
 
 	if player_state == "driving" then
 		self:_set_camera_position_in_vehicle()
 	elseif player_state == "jerry1" or player_state == "jerry2" then
-		mrotation.set_zero(cam_offset_rot)
-		mrotation.multiply(cam_offset_rot, self._parent_unit:movement().fall_rotation)
-		mrotation.multiply(cam_offset_rot, self._output_data.rotation)
+		mrot_set_zero(cam_offset_rot)
+		mrot_multiply(cam_offset_rot, self._parent_unit:movement().fall_rotation)
+		mrot_multiply(cam_offset_rot, self._output_data.rotation)
 
 		local shoulder_pos = mvec3
 		local shoulder_rot = mrot4
 
-		mrotation.set_zero(shoulder_rot)
-		mrotation.multiply(shoulder_rot, cam_offset_rot)
-		mrotation.multiply(shoulder_rot, self._shoulder_stance.rotation)
-		mrotation.multiply(shoulder_rot, self._vel_overshot.rotation)
-		mvector3.set(shoulder_pos, self._shoulder_stance.translation)
-		mvector3.add(shoulder_pos, self._vel_overshot.translation)
-		mvector3.rotate_with(shoulder_pos, cam_offset_rot)
-		mvector3.add(shoulder_pos, self._parent_unit:position())
+		mrot_set_zero(shoulder_rot)
+		mrot_multiply(shoulder_rot, cam_offset_rot)
+		mrot_multiply(shoulder_rot, self._shoulder_stance.rotation)
+		mrot_multiply(shoulder_rot, self._vel_overshot.rotation)
+		mvec3_set(shoulder_pos, self._shoulder_stance.translation)
+		mvec3_add(shoulder_pos, self._vel_overshot.translation)
+		mvec3_rotate_with(shoulder_pos, cam_offset_rot)
+		mvec3_add(shoulder_pos, self._parent_unit:position())
 		self:set_position(shoulder_pos)
 		self:set_rotation(shoulder_rot)
 		self._parent_unit:camera():set_position(self._parent_unit:position())
