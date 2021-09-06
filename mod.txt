@@ -1,9 +1,9 @@
 {
 	"name" : "Tactical Lean",
-	"description" : "'50,000 people use to heist here, now it's a ghost town.'\nAdds the ability to look and shoot around corners, using two keybinds. Requires HoldsTheKey mod.",
+	"description" : "'50,000 people use to heist here, now it's a ghost town.'\nAdds the ability to look and shoot around corners, using two keybinds. Requires HoldsTheKey mod.\n\nSimplified Chinese translation by DoctorKoKoDaYo.",
 	"author" : "Offyerrocker",
 	"contact" : "Discord: Offyerrocker#3878",
-	"version" : "3.0",
+	"version" : "3.1",
 	"blt_version" : 2,
 	"image" : "icon.png"
 	"color" : "255 64 0",
