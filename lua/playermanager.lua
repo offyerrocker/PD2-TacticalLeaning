@@ -4,5 +4,4 @@ end
 
 Hooks:PostHook(PlayerManager,"update","PlayerManagerUpdate_TacticalLean",function(self,t,dt)
 	TacticalLean:Update(t,dt)
-end
-)
+end)

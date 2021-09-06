@@ -13,7 +13,7 @@ local mvec4 = Vector3()
 
 local mvec3_set = mvector3.set
 local mvec3_add = mvector3.add
-local mvec_copy = mvector3.copy
+local mvec3_copy = mvector3.copy
 local mvec3_rotate_with = mvector3.rotate_with
 
 local mrot_set_zero = mrotation.set_zero
@@ -145,7 +145,7 @@ function FPCameraPlayerBase:_update_rot(axis, unscaled_axis,...)
 	--this below line is there to enable compatibility support with other mods that may require the adjusted head position;
 	--eg. "Less Inaccurate Weapon Laser" by TdlQ seems to encounter issues with getting the head position when combined with this mod
 	--possibly due to code execution order
-	TacticalLean.previous_raycast_from = mvec3_copy(new_head_po	s)
+	TacticalLean.previous_raycast_from = mvec3_copy(new_head_pos)
 	
 	mvec3_add(new_head_pos, self._head_stance.translation)
 
@@ -231,7 +231,7 @@ function FPCameraPlayerBase:_update_rot(axis, unscaled_axis,...)
 	mvec3_add(new_shoulder_pos, self._vel_overshot.translation)
 	mvec3_rotate_with(new_shoulder_pos, self._output_data.rotation)
 	mvec3_add(new_shoulder_pos, new_head_pos)
-	(new_shoulder_rot)
+	mrot_set_zero(new_shoulder_rot)
 	mrot_multiply(new_shoulder_rot, self._output_data.rotation)
 	mrot_multiply(new_shoulder_rot, self._shoulder_stance.rotation)
 	mrot_multiply(new_shoulder_rot, self._vel_overshot.rotation)

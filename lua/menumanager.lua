@@ -40,7 +40,8 @@ TacticalLean.settings = {
 	lean_angle = 10, --in degrees
 	toggle_lean = false,
 	controller_mode = false,
-	controller_auto_unlean = false
+	controller_auto_unlean = false,
+	compatibility_mode_playermanager = false
 }
 
 TacticalLean.lean_direction = false 
@@ -106,6 +107,9 @@ function TacticalLean:IsControllerAutoUnleanEnabled()
 	return self.settings.controller_auto_unlean
 end
 
+function TacticalLean:IsPMUpdateCompatibilityModeEnabled()
+	return self.settings.compatibility_mode_playermanager
+end
 
 
 --==================== LEANING =====================
@@ -385,6 +389,16 @@ function TacticalLean:Update(_t,dt)
 --	Console:SetTrackerValue("trackere","leaning " .. tostring(new_lean_direction) .. ", exiting_lean " .. tostring(TacticalLean:IsExitingLean()))
 end
 
+function TacticalLean:RemoveUpdators()
+	Hooks:RemovePostHook("PlayerManagerUpdate_TacticalLean")
+	if BeardLib then 
+		BeardLib:RemoveUpdater("BeardLibUpdate_TacticalLean")
+	end
+	if managers.hud then 
+		managers.hud:remove_updator("HUDManagerUpate_TacticalLean")
+	end
+end
+
 --==================== I/O =====================
 
 function TacticalLean:Load()
@@ -468,4 +482,18 @@ Hooks:Add( "MenuManagerInitialize", "MenuManagerInitialize_TacticalLean", functi
 	HoldTheKey:Add_Keybind(TacticalLean.KEYBIND_LEAN_LEFT)
 	HoldTheKey:Add_Keybind(TacticalLean.KEYBIND_LEAN_RIGHT)
 
+end)
+
+
+Hooks:Add("BaseNetworkSessionOnLoadComplete","NetworkLoadComplete_TacticalLeaning",function() --PlayerManager_on_internal_load
+	if TacticalLean:IsPMUpdateCompatibilityModeEnabled() then
+		TacticalLean:RemoveUpdators()
+		--unhook just to be safe
+		local cb = callback(TacticalLean,TacticalLean,"Update")
+		if BeardLib then 
+			BeardLib:AddUpdater("BeardLibUpdate_TacticalLean",cb)
+		elseif managers.hud then 
+			managers.hud:add_updator("HUDManagerUpate_TacticalLean",cb)
+		end
+	end
 end)
