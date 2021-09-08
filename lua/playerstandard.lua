@@ -22,6 +22,14 @@ Hooks:PostHook(PlayerStandard,"_start_action_running","startrun_tacticallean",fu
 	end
 end)
 
+--[[ reliably prevents leaning while running but results in jerky, instant lean exit on running start
+Hooks:PostHook(PlayerStandard,"_update_running_timers","updaterun_tacticallean",function(self,t)
+	if self:running() then
+		TacticalLean:OnLeanStopped()
+	end
+end)
+--]]
+
 local orig_check_jump = PlayerStandard._check_action_jump
 function PlayerStandard:_check_action_jump(t,input,...)
 	if not TacticalLean:GetLeanDirection() then

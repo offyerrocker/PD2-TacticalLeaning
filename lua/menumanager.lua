@@ -174,8 +174,8 @@ function TacticalLean:StartLean(lr)
 	
 	--todo remove this if it's redundant
 	if self:IsToggleModeEnabled() and lr and self:GetLeanDirection() == lr then
-		TacticalLean:StopLean()
-		return
+--		TacticalLean:StopLean()
+--		return
 	end
 	self:SetLeanDirection(lr)
 end
@@ -197,6 +197,10 @@ end
 function TacticalLean:OnLeanStopped()
 	self:SetLeanDirection(false)
 	self.exiting_lean = false
+	self.input_cache.left_input = false
+	self.input_cache.right_input = false
+	self.output_cache.left_input = false
+	self.output_cache.right_input = false
 	self:SetLeanLerp(0)
 end
 
@@ -228,15 +232,18 @@ function TacticalLean:Update(_t,dt)
 	if not alive(player) then 
 		return
 	end
+	local state = player:movement():current_state()
 	local t = Application:time()
 	--local __t = string.format("%0.2f",t)
-	
 	
 	local exiting_lean = self:IsExitingLean()
 	local current_lean = self:GetLeanDirection()
 	local lean_duration = self:GetLeanDuration()
 	local exit_duration = self:GetExitDuration()
 	local current_lerp = self:GetLeanLerp()
+	local new_lean_direction = false
+	local pressed_any
+	local left_input,right_input 
 	
 	if exiting_lean then
 		if current_lerp > 0 then 
@@ -252,126 +259,122 @@ function TacticalLean:Update(_t,dt)
 		end
 	end
 	
-	
-	local left_input,right_input 
-	if not managers.hud._chat_focus then 
-		if self:IsControllerModeEnabled() then
-			local state = player:movement():current_state()
-			if state:in_steelsight() then 
-				local all_input = state:_get_input(_t,dt,Application:paused())
-				
-				left_input = all_input[self.CONTROLLER_LEAN_LEFT]
-				right_input = all_input[self.CONTROLLER_LEAN_RIGHT]
+	if not state:running() then 
+		if not managers.hud._chat_focus then 
+			if self:IsControllerModeEnabled() then
+				if state:in_steelsight() then 
+					local all_input = state:_get_input(_t,dt,Application:paused())
+					
+					left_input = all_input[self.CONTROLLER_LEAN_LEFT]
+					right_input = all_input[self.CONTROLLER_LEAN_RIGHT]
+				end
+			else
+				left_input = HoldTheKey:Keybind_Held(self.KEYBIND_LEAN_LEFT)
+				right_input = HoldTheKey:Keybind_Held(self.KEYBIND_LEAN_RIGHT)
 			end
-		else
-			left_input = HoldTheKey:Keybind_Held(self.KEYBIND_LEAN_LEFT)
-			right_input = HoldTheKey:Keybind_Held(self.KEYBIND_LEAN_RIGHT)
 		end
-	end
+		
+		if self:IsToggleModeEnabled() then
+			local input_cache = self.input_cache
+			local output_cache = self.output_cache
+			local left_cached = input_cache.left_input
+			local right_cached = input_cache.right_input
+			
+			input_cache.left_input = left_input
+			input_cache.right_input = right_input
+			
+			if not left_cached then 
+				if left_input then 
+					--on first left press...
+					if current_lean then 
+						--...while leaning, stop leaning
+						self:StopLean() --this also clears input/output caches
+						exiting_lean = true
+					else
+						--...while not leaning, start leaning
+						output_cache.left_input = true
+					end
+				end
+			else
+				if left_input then 
+					--if continuously held, do nothing
+				else
+					--if released, do nothing
+				end
+			end
+			
+			if not right_cached then 
+				if right_input then 
+					--on first right press...
+					if current_lean then 
+						--...while leaning, stop leaning
+						self:StopLean() --this also clears input/output caches
+					else
+						--...while not leaning, start leaning
+						output_cache.right_input = true
+					end
+				end
+			else
+				if right_input then 
+					--if continuously held, do nothing
+				else
+					--if released, do nothing
+				end
+			end
+			
+			left_input = output_cache.left_input
+			right_input = output_cache.right_input
+		else
+			--disable double-inputs
+			if left_input and right_input then 
+				left_input = false
+				right_input = false
+			end
+		end
+		
+	--	Console:SetTrackerValue("trackerb",string.format("%0.2f / %0.2f",TacticalLean:GetLeanLerp() or 0,lean_duration))
 
-	if self:IsToggleModeEnabled() then
-		local input_cache = self.input_cache
-		local output_cache = self.output_cache
-		local left_cached = input_cache.left_input
-		local right_cached = input_cache.right_input
 		
-		input_cache.left_input = left_input
-		input_cache.right_input = right_input
+		if left_input then
+			pressed_any = true
+			if current_lean ~= self.DIRECTION_LEFT then
+				new_lean_direction = self.DIRECTION_LEFT
+			end
+		end
+		if right_input then
+			pressed_any = true
+			if current_lean ~= self.DIRECTION_RIGHT then
+				new_lean_direction = self.DIRECTION_RIGHT
+			end
+		end
 		
-		if not left_cached then 
-			if left_input then 
-				--on first left press...
+		
+		--refresh values in case input segment has changed desired lean direction
+		if pressed_any then 
+			if new_lean_direction then 
+				--if user wants to switch lean sides, 
 				if current_lean then 
-					--...while leaning, stop leaning
-					self:StopLean() --this also clears input/output caches
+					--...then stop leaning first
+					self:StopLean()
 					exiting_lean = true
 				else
-					--...while not leaning, start leaning
-					output_cache.left_input = true
+					--...and then start the new lean
+					self:StartLean(new_lean_direction)
+					current_lean = new_lean_direction
 				end
+			elseif exiting_lean then 
+				--pressed same button to cancel exit; un-cancel!
+				exiting_lean = false
+				self.exiting_lean = false
 			end
-		else
-			if left_input then 
-				--if continuously held, do nothing
-			else
-				--if released, do nothing
-			end
+		elseif current_lean then
+			--if no lean input, and currently leaning,
+			--then stop leaning
+			self:StopLean()
+			exiting_lean = true
 		end
-		
-		if not right_cached then 
-			if right_input then 
-				--on first right press...
-				if current_lean then 
-					--...while leaning, stop leaning
-					self:StopLean() --this also clears input/output caches
-				else
-					--...while not leaning, start leaning
-					output_cache.right_input = true
-				end
-			end
-		else
-			if right_input then 
-				--if continuously held, do nothing
-			else
-				--if released, do nothing
-			end
-		end
-		
-		left_input = output_cache.left_input
-		right_input = output_cache.right_input
 	else
-		--disable double-inputs
-		if left_input and right_input then 
-			left_input = false
-			right_input = false
-		end
-	end
-	
-	
-
---	Console:SetTrackerValue("trackerb",string.format("%0.2f / %0.2f",TacticalLean:GetLeanLerp() or 0,lean_duration))
-
-	
-	
-	local new_lean_direction = false
-	local pressed_any
-	if left_input then
-		pressed_any = true
-		if current_lean ~= self.DIRECTION_LEFT then
-			new_lean_direction = self.DIRECTION_LEFT
-		end
-	end
-	if right_input then
-		pressed_any = true
-		if current_lean ~= self.DIRECTION_RIGHT then
-			new_lean_direction = self.DIRECTION_RIGHT
-		end
-	end
-	
-	
-	--refresh values in case input segment has changed desired lean direction
-	if pressed_any then 
-		if new_lean_direction then 
-			--if user wants to switch lean sides, 
-			if current_lean then 
-				--...then stop leaning first
-				self:StopLean()
-				exiting_lean = true
-			else
-				--...and then start the new lean
-				self:StartLean(new_lean_direction)
-				current_lean = new_lean_direction
-			end
-		elseif exiting_lean then 
-			--pressed same button to cancel exit; un-cancel!
-			exiting_lean = false
-			self.exiting_lean = false
-		end
-	elseif current_lean then
-		--if no lean input, and currently leaning,
-		--then stop leaning
 		self:StopLean()
-		exiting_lean = true
 	end
 	
 	
@@ -488,6 +491,13 @@ end)
 Hooks:Add("BaseNetworkSessionOnLoadComplete","NetworkLoadComplete_TacticalLeaning",function() --PlayerManager_on_internal_load
 	if TacticalLean:IsPMUpdateCompatibilityModeEnabled() then
 		TacticalLean:RemoveUpdators()
+		
+		local pm = managers.player
+		if pm then 
+			pm:register_message(Message.OnWeaponSwitch, "onplayerweaponswitched_tacticallean",function()
+				TacticalLean:StopLean()
+			end)
+		end
 		--unhook just to be safe
 		local cb = callback(TacticalLean,TacticalLean,"Update")
 		if BeardLib then 
