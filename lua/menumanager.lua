@@ -23,7 +23,7 @@ TacticalLean.output_cache = {} --only used for toggle mode
 
 TacticalLean.LEAN_DURATION = 0.10
 TacticalLean.EXIT_DURATION = 0.15
-TacticalLean.CHECK_COLLISION = false
+TacticalLean.CHECK_COLLISION = false --not functional atm
 
 TacticalLean.previous_raycast_from = nil --will contain a Vector3 representing the position of the player's camera/head in the world, whether leaning or not
 
@@ -259,7 +259,7 @@ function TacticalLean:Update(_t,dt)
 		end
 	end
 	
-	if not state:running() then 
+	if state and not state:running() then 
 		if not managers.hud._chat_focus then 
 			if self:IsControllerModeEnabled() then
 				if state:in_steelsight() then 
