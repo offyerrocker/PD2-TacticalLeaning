@@ -10,7 +10,7 @@ end)
 
 local orig_check_bipod = PlayerStandard._check_action_deploy_bipod
 function PlayerStandard:_check_action_deploy_bipod(t,input,...)
-	if TacticalLean:GetLeanDirection() then
+	if not TacticalLean:GetLeanDirection() then
 		--prevent bipodding if leaning
 		return orig_check_bipod(self,t,input,...)	
 	end
