@@ -18,5 +18,4 @@
 	"hud_taclean_state_blocked_generic" : "此处无法探头！",
 	"menu_taclean_missing_htk_prompt_title" : "缺少依赖模组：HoldTheKey！",
 	"menu_taclean_missing_htk_prompt_desc" : "您尚未安装HoldTheKey模组,或者您没有正确安装它\n缺少该模组会导致游戏崩溃或本模组失效！\nHoldTheKey是Tactical Leaning模组的依赖模组！"
-
 }

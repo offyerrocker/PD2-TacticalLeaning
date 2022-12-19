@@ -18,5 +18,4 @@
 	"hud_taclean_state_blocked_generic" : "You cannot lean here!",
 	"menu_taclean_missing_htk_prompt_title" : "Missing HoldTheKey!",
 	"menu_taclean_missing_htk_prompt_desc" : "You either do not have HoldTheKey installed, or have installed it incorrectly!\nThis can result in the game crashing or the mod not working.\nHoldTheKey is a dependency mod that Tactical Leaning mod uses to detect when you are holding a key down. You can find the download and the installation instructions here:\nhttps://modwork.shop/22253"
-	
 }

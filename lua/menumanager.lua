@@ -30,10 +30,10 @@ TacticalLean.previous_raycast_from = nil --will contain a Vector3 representing t
 TacticalLean.KEYBIND_LEAN_LEFT = "keybindid_taclean_left" --these are blt keybind ids
 TacticalLean.KEYBIND_LEAN_RIGHT = "keybindid_taclean_right"
 
---these are playerstandard input names (table keys technically but not the keyboard kind)
+--these are no longer used
+--also that typo in "btn_meleet_state" is not mine
 TacticalLean.CONTROLLER_LEAN_LEFT = "btn_run_state"
 TacticalLean.CONTROLLER_LEAN_RIGHT = "btn_meleet_state"
---that typo is not on my side
 
 TacticalLean.settings = {
 	lean_distance = 30, --in cm
@@ -41,7 +41,9 @@ TacticalLean.settings = {
 	toggle_lean = false,
 	controller_mode = false,
 	controller_auto_unlean = false,
-	compatibility_mode_playermanager = false
+	compatibility_mode_playermanager = false,
+	controller_bind_lean_left = "run",
+	controller_bind_lean_right = "melee"
 }
 
 TacticalLean.lean_direction = false 
@@ -226,6 +228,14 @@ function TacticalLean:RaycastCheck(lr)
 	return ray
 end
 
+function TacticalLean:GetControllerBindLeanLeft()
+	return self.settings.controller_bind_lean_left
+end
+
+function TacticalLean:GetControllerBindLeanRight()
+	return self.settings.controller_bind_lean_right
+end
+
 function TacticalLean:Update(_t,dt)
 
 	local player = managers.player:local_player()
@@ -262,11 +272,19 @@ function TacticalLean:Update(_t,dt)
 	if state and not state:running() then 
 		if not managers.hud._chat_focus then 
 			if self:IsControllerModeEnabled() then
-				if state:in_steelsight() then 
-					local all_input = state:_get_input(_t,dt,Application:paused())
+				if state:in_steelsight() then
+					local controller = state._controller
+					--this doesn't necessarily mean a literal controller/gamepad
+					--it's just the wrapper for the current input device (M+KB, XBOX/PS controller, USB controller, DDR pad, etc.)
 					
-					left_input = all_input[self.CONTROLLER_LEAN_LEFT]
-					right_input = all_input[self.CONTROLLER_LEAN_RIGHT]
+					right_input = controller:get_input_bool(self.settings.controller_bind_right)
+					left_input = controller:get_input_bool(self.settings.controller_bind_left)
+					
+				--this causes 45deg sights not to activate while in ADS with controllers specifically for whatever reason
+				--so we can't use that anymore
+--					local all_input = state:_get_input(_t,dt,Application:paused())
+--					left_input = all_input[self.CONTROLLER_LEAN_LEFT]
+--					right_input = all_input[self.CONTROLLER_LEAN_RIGHT]
 				end
 			else
 				left_input = HoldTheKey:Keybind_Held(self.KEYBIND_LEAN_LEFT)
