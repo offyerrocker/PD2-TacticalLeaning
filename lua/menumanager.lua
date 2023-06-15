@@ -277,8 +277,8 @@ function TacticalLean:Update(_t,dt)
 					--this doesn't necessarily mean a literal controller/gamepad
 					--it's just the wrapper for the current input device (M+KB, XBOX/PS controller, USB controller, DDR pad, etc.)
 					
-					right_input = controller:get_input_bool(self.settings.controller_bind_right)
-					left_input = controller:get_input_bool(self.settings.controller_bind_left)
+					right_input = controller:get_input_bool(self:GetControllerBindLeanRight())
+					left_input = controller:get_input_bool(self:GetControllerBindLeanLeft())
 					
 				--this causes 45deg sights not to activate while in ADS with controllers specifically for whatever reason
 				--so we can't use that anymore
