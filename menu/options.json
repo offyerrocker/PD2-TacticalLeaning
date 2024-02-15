@@ -13,6 +13,14 @@
 			"value" : "toggle_lean"
 		},
 		{
+			"type" : "toggle",
+			"id" : "taclean_toggle_autounlean_id",
+			"title" : "taclean_toggle_autounlean_title",
+			"description" : "taclean_toggle_autounlean_desc",
+			"callback" : "callback_taclean_toggle_autounlean",
+			"value" : "auto_unlean"
+		},
+		{
 			"type" : "keybind",
 			"id" : "id_taclean_keybind_left",
 			"title" : "taclean_keybind_left_title",
@@ -71,14 +79,6 @@
 			"description" : "taclean_togglecontrollermode_desc",
 			"callback" : "callback_taclean_toggle_controller_mode",
 			"value" : "controller_mode"
-		},
-		{
-			"type" : "toggle",
-			"id" : "taclean_toggle_autounlean_id",
-			"title" : "taclean_toggle_autounlean_title",
-			"description" : "taclean_toggle_autounlean_desc",
-			"callback" : "callback_taclean_toggle_autounlean",
-			"value" : "controller_auto_unlean"
 		}
 	]
 

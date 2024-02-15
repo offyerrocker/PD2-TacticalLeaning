@@ -3,7 +3,7 @@ if _G.IS_VR then
 end
 
 Hooks:PostHook(PlayerStandard,"_end_action_steelsight","stopads_tacticallean",function(self,t)
-	if TacticalLean:IsControllerModeEnabled() and TacticalLean:IsControllerAutoUnleanEnabled() then
+	if TacticalLean:IsAutoUnleanEnabled() then
 		TacticalLean:StopLean()
 	end
 end)

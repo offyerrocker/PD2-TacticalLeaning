@@ -40,7 +40,7 @@ TacticalLean.settings = {
 	lean_angle = 10, --in degrees
 	toggle_lean = false,
 	controller_mode = false,
-	controller_auto_unlean = false,
+	auto_unlean = false,
 	compatibility_mode_playermanager = false,
 	controller_bind_lean_left = "run",
 	controller_bind_lean_right = "melee"
@@ -51,7 +51,7 @@ TacticalLean.lean_direction = false
 --describes the direction of the player's current lean, or if exiting lean, their prior lean state as the lean returns to 0
 
 TacticalLean.lean_lerp = 0 
---number between 0 and 1, inclusive
+--float between 0 and 1, inclusive
 --describes the percentage state of the current lean (eg 1 is fully leaning, 0 or false/nil is not leaning, 0.5 is halfway midlean)
 --this number is adjusted as the lean updates
 
@@ -104,7 +104,12 @@ function TacticalLean:IsControllerModeEnabled()
 	return self.settings.controller_mode
 end
 
---returns whether or not the user setting for controller auto-un-lean is enabled
+--returns whether or not the user setting for auto-un-lean is enabled- applies for both controllers and for keyboard/mouse
+function TacticalLean:IsAutoUnleanEnabled()
+	return self.settings.auto_unlean
+end
+
+--[DEPRECATED] returns whether or not the user setting for controller auto-un-lean is enabled- deprecated/not used, please use IsAutoUnleanEnabled() instead
 function TacticalLean:IsControllerAutoUnleanEnabled()
 	return self.settings.controller_auto_unlean
 end
@@ -490,7 +495,7 @@ Hooks:Add( "MenuManagerInitialize", "MenuManagerInitialize_TacticalLean", functi
 	end
 	MenuCallbackHandler.callback_taclean_toggle_autounlean = function(self,item)
 		local value = item:value() == "on"
-		TacticalLean.settings.controller_auto_unlean = value
+		TacticalLean.settings.auto_unlean = value
 		TacticalLean:Save()
 	end
 	

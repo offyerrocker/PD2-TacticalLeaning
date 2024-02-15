@@ -10,10 +10,10 @@
 	"taclean_slider_distance_desc" : "Change the distance to lean to",
 	"taclean_slider_angle_title" : "Lean angle",
 	"taclean_slider_angle_desc" : "Change the angle to lean at",
+	"taclean_toggle_autounlean_title" : "Automatic Un-Lean",
+	"taclean_toggle_autounlean_desc" : "Automatically stop leaning when you stop aiming down sights.",
 	"taclean_togglecontrollermode_title" : "Controller Mode",
 	"taclean_togglecontrollermode_desc" : "Allows you to use the controller buttons for \"Sprint\" or \"Melee\" while aiming down sights to lean left or right.",
-	"taclean_toggle_autounlean_title" : "Controller: Automatic Un-Lean",
-	"taclean_toggle_autounlean_desc" : "When using a Controller, automatically stop leaning when you exit ADS.",
 	"hud_taclean_state_blocked_downed" : "You cannot lean while downed!"
 	"hud_taclean_state_blocked_generic" : "You cannot lean here!",
 	"menu_taclean_missing_htk_prompt_title" : "Missing HoldTheKey!",
